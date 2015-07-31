@@ -129,7 +129,11 @@ public class PointerView extends ImageView {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                mWindowManager.updateViewLayout(PointerView.this, mLayoutParams);
+                try {
+                    mWindowManager.updateViewLayout(PointerView.this, mLayoutParams);
+                } catch(IllegalArgumentException e) {
+                    mWindowManager.addView(PointerView.this, mLayoutParams);
+                }
             }
         });
     }

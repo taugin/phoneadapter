@@ -1,50 +1,81 @@
 package com.android.phoneadapter;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.TextView;
 
 import com.android.phoneadapter.floatview.FloatService;
 
-
 public class MainActivity extends Activity {
 
-    private TextView mTextView;
+    private boolean running = false;
+    private WorkHandler mWorkHandler;
+    private static int TID = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mTextView = new TextView(this);
-        setContentView(mTextView);
+        TouchView touchView = new TouchView(this);
+        touchView.setBackgroundColor(getResources().getColor(
+                android.R.color.transparent));
+        setContentView(touchView);
         startService(new Intent(this, FloatService.class));
-        finish();
+        // finish();
+        // init();
     }
 
-    class ReadEventThread extends Thread {
-        public void run() {
-            try {
-                FileInputStream fis = new FileInputStream("/dev/input/event0");
-                Log.d(Log.TAG, "begin read");
-                byte [] buffer = new byte[16];
-                int read = 0;
-                while((read = fis.read(buffer)) > 0) {
-                    Log.d(Log.TAG, "line : " + new String(buffer, 0, read));
-                }
-                Log.d(Log.TAG, "end read");
-            } catch (FileNotFoundException e) {
-                Log.d(Log.TAG, "error : " + e);
-            } catch (IOException e) {
-                Log.d(Log.TAG, "error : " + e);
+    private void init() {
+        HandlerThread handlerThread = new HandlerThread("handler");
+        handlerThread.start();
+        mWorkHandler = new WorkHandler(handlerThread.getLooper());
+    }
+
+    class WorkHandler extends Handler {
+        public WorkHandler(Looper looper) {
+            super(looper);
+        }
+        public void handleMessage(Message msg) {
+            Log.d(Log.TAG, "msg : " + msg);
+        }
+    }
+
+    class TouchView extends View {
+        private boolean pressed = false;
+        public TouchView(Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            switch(event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                pressed = true;
+                TouchEvent.sendEvent("", "3", "47", String.valueOf(TID++));
+                TouchEvent.sendEvent("", "3", "47", "0");
+                TouchEvent.sendEvent("", "3", "47", "0");
+                TouchEvent.sendEvent("", "3", "47", "0");
+                TouchEvent.sendEvent("", "3", "47", "0");
+                TouchEvent.sendEvent("", "3", "47", "0");
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+            case MotionEvent.ACTION_UP:
+                pressed = false;
+                break;
             }
+            return true;
+        }
+    }
+
+    static class TouchEvent {
+        public static void sendEvent(String d, String t, String c, String v) {
         }
     }
 }
