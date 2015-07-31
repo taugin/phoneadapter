@@ -16,17 +16,16 @@ import android.view.WindowManager.LayoutParams;
 
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.R;
-import com.android.phoneadapter.floatview.FloatView.OnLongPressListener;
-import com.android.phoneadapter.floatview.FloatView.OnPressListener;
+import com.android.phoneadapter.floatview.PointerView.OnLongPressListener;
+import com.android.phoneadapter.floatview.PointerView.OnPressListener;
 import com.android.phoneadapter.socket.EventSocket;
 
 public class FloatService extends Service {
     private static final String TAG = "FloatService";
 
     private WindowManager mWindowManager = null;
-    private WindowManager.LayoutParams mLayoutParams = null;
 
-    private FloatView mFloatView = null;
+    private PointerView mPointerView = null;
     private EventSocket mEventSocket;
 
     @Override
@@ -36,36 +35,37 @@ public class FloatService extends Service {
 
     @Override
     public void onCreate() {
-        initLayoutParams();
-        createView();
+        createPointerView();
 
         Log.d(Log.TAG, "");
-        mEventSocket = new EventSocket(this, mFloatView);
+        mEventSocket = new EventSocket(this, mPointerView);
         mEventSocket.listenOn();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null) {
-
+        if (intent == null) {
+            stopSelf(startId);
+            startService(new Intent(this, FloatService.class));
+            return Service.START_STICKY;
         }
-        return super.onStartCommand(intent, flags, startId);
+        return Service.START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        mWindowManager.removeView(mFloatView);
+        mWindowManager.removeView(mPointerView);
     }
 
-    private void initLayoutParams() {
+    private WindowManager.LayoutParams getLayoutParams(boolean full) {
         mWindowManager = (WindowManager) getSystemService(Service.WINDOW_SERVICE);
-        mLayoutParams = new WindowManager.LayoutParams();
-        mLayoutParams.type = LayoutParams.TYPE_SYSTEM_ERROR; // Can be drag to
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.type = LayoutParams.TYPE_SYSTEM_ERROR; // Can be drag to
                                                              // statusbar
-        mLayoutParams.format = PixelFormat.RGBA_8888;
-        mLayoutParams.alpha = 1.0f;
+        params.format = PixelFormat.RGBA_8888;
+        params.alpha = 1.0f;
 
-        mLayoutParams.flags = LayoutParams.FLAG_NOT_TOUCH_MODAL
+        params.flags = LayoutParams.FLAG_NOT_TOUCH_MODAL
                 | LayoutParams.FLAG_NOT_FOCUSABLE
                 | LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 
@@ -77,21 +77,28 @@ public class FloatService extends Service {
          * mLayoutParams.flags=LayoutParams.FLAG_NOT_TOUCH_MODAL |
          * LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_NOT_TOUCHABLE;
          */
-        mLayoutParams.gravity = Gravity.LEFT | Gravity.TOP;
+        params.gravity = Gravity.LEFT | Gravity.TOP;
         // mLayoutParams.gravity = Gravity.RIGHT | Gravity.TOP;
-        mLayoutParams.x = 0;
-        mLayoutParams.y = 0;
+        params.x = 0;
+        params.y = 0;
 
         DisplayMetrics dm = new DisplayMetrics();
         dm = getResources().getDisplayMetrics();
-        mLayoutParams.width = LayoutParams.WRAP_CONTENT;
-        mLayoutParams.height = LayoutParams.WRAP_CONTENT;
+        if (full) {
+            params.width = dm.widthPixels;
+            params.height = dm.heightPixels;
+        } else {
+            params.width = LayoutParams.WRAP_CONTENT;
+            params.height = LayoutParams.WRAP_CONTENT;
+        }
+        return params;
     }
 
-    private void createView() {
-        FloatView floatView = null;
-        floatView = new FloatView(getApplicationContext(), mWindowManager,
-                mLayoutParams);
+    private void createPointerView() {
+        PointerView floatView = null;
+        WindowManager.LayoutParams params = getLayoutParams(false);
+        floatView = new PointerView(getApplicationContext(), mWindowManager,
+                params);
         floatView.setImageResource(R.drawable.cursor);
         // floatView.setBackgroundColor(Color.RED);
 
@@ -109,8 +116,8 @@ public class FloatService extends Service {
                 Log.d(TAG, "HaHa, onLongPress");
             }
         });
-        mFloatView = floatView;
-        mWindowManager.addView(mFloatView, mLayoutParams);
+        mPointerView = floatView;
+        mWindowManager.addView(mPointerView, params);
     }
 
     @SuppressLint("DefaultLocale") @Override

@@ -15,7 +15,7 @@ import android.widget.ImageView;
 
 import com.android.phoneadapter.Log;
 
-public class FloatView extends ImageView {
+public class PointerView extends ImageView {
     private static final String TAG = "FloatView";
     private static final int MODE_NOTHING = -1;
     private static final int MODE_SHORT_PRESS = 0;
@@ -39,7 +39,7 @@ public class FloatView extends ImageView {
 
     // 此wmParams为获取的全局变量，用以保存悬浮窗口的属性
 
-    public FloatView(Context context, WindowManager manager,
+    public PointerView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
         super(context);
         mWindowManager = manager;
@@ -129,7 +129,7 @@ public class FloatView extends ImageView {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                mWindowManager.updateViewLayout(FloatView.this, mLayoutParams);
+                mWindowManager.updateViewLayout(PointerView.this, mLayoutParams);
             }
         });
     }

@@ -1,7 +1,13 @@
 package com.android.phoneadapter.socket;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -20,20 +26,28 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 
+import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
-import com.android.phoneadapter.floatview.FloatView;
+import com.android.phoneadapter.floatview.PointerView;
 import com.google.gson.Gson;
 
 public class EventSocket {
 
     private boolean running = false;
-    private FloatView mFloatView;
+    private PointerView mFloatView;
     private OutputStream mOutputStream;
     private Context mContext;
+    private FileOutputStream mDeviceOutputStream = null;
 
-    public EventSocket(Context context, FloatView floatView) {
+    public EventSocket(Context context, PointerView floatView) {
         mContext = context;
         mFloatView = floatView;
+        
+        try {
+            mDeviceOutputStream = new FileOutputStream("/dev/input/event0");
+        } catch (FileNotFoundException e) {
+            Log.d(Log.TAG, "error : " + e);
+        }
     }
 
     public void listenOn() {
@@ -47,7 +61,7 @@ public class EventSocket {
     }
 
     private void processCmdData(String data) {
-        Log.d(Log.TAG, data);
+        // Log.d(Log.TAG, data);
         Gson gson = new Gson();
         Packet packet = gson.fromJson(data, Packet.class);
         if (packet != null) {
@@ -75,6 +89,15 @@ public class EventSocket {
                     Log.d(Log.TAG, "error : " + e);
                 }
                 sendData(object.toString());
+                return;
+            }
+            
+            if (Packet.REQUEST_POSITION.equals(packet.command)) {
+                mFloatView.updatePositionFromOuter(packet.x, packet.y);
+                // Log.d(Log.TAG, "pressed : " + packet.pressed);
+                if (packet.pressed) {
+                    // EventSender.sendevent(packet.device, packet.type, packet.code, packet.value);
+                }
                 return;
             }
         }
@@ -106,22 +129,35 @@ public class EventSocket {
         return ipaddress;
 
     }
-    
+
     private void processPosData(String data) {
-        int x = 0;
-        int y = 0;
-        JSONObject object;
-        try {
-            object = new JSONObject(data);
-            if (object.has("x")) {
-                x = object.getInt("x");
+        Log.d(Log.TAG, "data : " + data);
+        Gson gson = new Gson();
+        Packet packet = gson.fromJson(data, Packet.class);
+        if (packet != null) {
+            if (Packet.REQUEST_POSITION.equals(packet.command)) {
+                mFloatView.updatePositionFromOuter(packet.x, packet.y);
+                return;
             }
-            if (object.has("y")) {
-                y = object.getInt("y");
+            if (Packet.REQUEST_TOUCH.equals(packet.command)) {
+                /*
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                DataOutputStream dos = new DataOutputStream(baos);
+                try {
+                    dos.writeInt(0);
+                    dos.writeInt(0);
+                    dos.writeShort(Short.parseShort(packet.type));
+                    dos.writeShort(Short.parseShort(packet.code));
+                    dos.writeInt(Integer.parseInt(packet.value));
+                    mDeviceOutputStream.write(baos.toByteArray());
+                    mDeviceOutputStream.flush();
+                    dos.close();
+                } catch (IOException e) {
+                    Log.d(Log.TAG, "error : " + e.getMessage());
+                }*/
+                EventSender.sendEvent(packet.type, packet.code, packet.value);
+                return;
             }
-            mFloatView.updatePositionFromOuter(x, y);
-        } catch (JSONException e) {
-            Log.d(Log.TAG, "error : " + e);
         }
     }
 
@@ -144,13 +180,14 @@ public class EventSocket {
             DatagramPacket packet = new DatagramPacket(data, data.length);
             running = true;
             String packetData = null;
+            EventSender.openDevice("/dev/input/event0");
             while(running) {
-                Log.d(Log.TAG, "waiting for data ...");
                 datagramSocket.receive(packet);
                 packetData = new String(packet.getData(), 0, packet.getLength());
                 processPosData(packetData);
             }
             datagramSocket.close();
+            EventSender.closeDevice();
         } catch (SocketException e) {
             Log.d(Log.TAG, "error : " + e);
         } catch (IOException e) {
@@ -170,19 +207,13 @@ public class EventSocket {
                     Log.d(Log.TAG, "Accept a connection ...");
                     inputStream = socket.getInputStream();
                     mOutputStream = socket.getOutputStream();
-                    byte buf[] = new byte[512];
-                    int read = 0;
-                    String packetData = null;
-                    while((read = inputStream.read(buf)) > 0) {
-                        Log.d(Log.TAG, "read : " + read);
-                        packetData = new String(buf, 0, read);
-                        String allData[] = packetData.split("#");
-                        for (String s : allData) {
-                            if (!TextUtils.isEmpty(s)) {
-                                processCmdData(s);
-                            }
-                        }
+                    BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+                    String line = null;
+                    while((line = br.readLine()) != null) {
+                        // Log.d(Log.TAG, "read : " + line);
+                        processByThread(line);
                     }
+                    br.close();
                 } catch(IOException e) {
                     Log.d(Log.TAG, "error : " + e);
                 }
@@ -197,6 +228,14 @@ public class EventSocket {
         } catch (IOException e) {
             Log.d(Log.TAG, "error : " + e);
         }
+    }
+
+    private void processByThread(final String str) {
+        new Thread(){
+            public void run() {
+                processCmdData(str);
+            }
+        }.start();
     }
 
     public void sendData(final String data) {
@@ -218,8 +257,14 @@ public class EventSocket {
         public static final String REQUEST_POSITION = "request_position";
         public static final String REQUEST_SCREENSIZE = "request_screensize";
         public static final String REQUEST_UDPSERVER = "request_udpserver";
+        public static final String REQUEST_TOUCH = "request_touch";
         public String command;
         public int x;
         public int y;
+        public boolean pressed;
+        public String device;
+        public String type;
+        public String code;
+        public String value;
     }
 }
