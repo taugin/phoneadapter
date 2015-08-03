@@ -1,81 +1,118 @@
 package com.android.phoneadapter;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
+
+import org.apache.http.conn.util.InetAddressUtils;
+
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.Message;
-import android.view.MotionEvent;
+import android.preference.PreferenceManager;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.phoneadapter.floatview.FloatService;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements OnClickListener {
 
-    private boolean running = false;
-    private WorkHandler mWorkHandler;
-    private static int TID = 0;
-
+    private TextView mClientIp;
+    private EditText mServerIP;
+    private EditText mDeviceNode;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        TouchView touchView = new TouchView(this);
-        touchView.setBackgroundColor(getResources().getColor(
-                android.R.color.transparent));
-        setContentView(touchView);
-        startService(new Intent(this, FloatService.class));
-        // finish();
-        // init();
+        setContentView(R.layout.activity_main);
+        Button button = null;
+        mServerIP = (EditText) findViewById(R.id.server_ip);
+        mClientIp = (TextView) findViewById(R.id.client_ip);
+        mDeviceNode = (EditText) findViewById(R.id.device_node);
+        button = (Button) findViewById(R.id.start_server);
+        button.setOnClickListener(this);
+        button = (Button) findViewById(R.id.start_touch);
+        button.setOnClickListener(this);
+        button = (Button) findViewById(R.id.set_server_ip);
+        button.setOnClickListener(this);
+        
+        button = (Button) findViewById(R.id.set_rw);
+        button.setOnClickListener(this);
+        
+        mClientIp.setText(getLocalHostIp());
+        String serverIp = PreferenceManager.getDefaultSharedPreferences(this).getString("server_ip", null);
+        mServerIP.setText(serverIp);
     }
 
-    private void init() {
-        HandlerThread handlerThread = new HandlerThread("handler");
-        handlerThread.start();
-        mWorkHandler = new WorkHandler(handlerThread.getLooper());
-    }
-
-    class WorkHandler extends Handler {
-        public WorkHandler(Looper looper) {
-            super(looper);
-        }
-        public void handleMessage(Message msg) {
-            Log.d(Log.TAG, "msg : " + msg);
-        }
-    }
-
-    class TouchView extends View {
-        private boolean pressed = false;
-        public TouchView(Context context) {
-            super(context);
-        }
-
-        @Override
-        public boolean onTouchEvent(MotionEvent event) {
-            switch(event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                pressed = true;
-                TouchEvent.sendEvent("", "3", "47", String.valueOf(TID++));
-                TouchEvent.sendEvent("", "3", "47", "0");
-                TouchEvent.sendEvent("", "3", "47", "0");
-                TouchEvent.sendEvent("", "3", "47", "0");
-                TouchEvent.sendEvent("", "3", "47", "0");
-                TouchEvent.sendEvent("", "3", "47", "0");
-                break;
-            case MotionEvent.ACTION_MOVE:
-                break;
-            case MotionEvent.ACTION_UP:
-                pressed = false;
-                break;
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.start_server) {
+            Intent intent = new Intent(this, FloatService.class);
+            String deviceNode = mDeviceNode.getText().toString();
+            intent.putExtra("device_node", deviceNode);
+            stopService(intent);
+            startService(intent);
+            finish();
+        } else if (v.getId() == R.id.start_touch) {
+            startActivity(new Intent(this, TouchActivity.class));
+            finish();
+        } else if (v.getId() == R.id.set_server_ip) {
+            String ip = mServerIP.getText().toString();
+            if (!TextUtils.isEmpty(ip)) {
+                boolean ret = PreferenceManager.getDefaultSharedPreferences(this).edit().putString("server_ip", ip).commit();
+                Toast.makeText(this, "Set success", Toast.LENGTH_SHORT).show();
             }
-            return true;
+        } else if (v.getId() == R.id.set_rw) {
+            String deviceNode = mDeviceNode.getText().toString();
+            try {
+                Process p = Runtime.getRuntime().exec("su");
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
+                String cmd = "chmod 666 " + deviceNode + "\n";
+                Log.d(Log.TAG, "cmd : " + cmd);
+                bw.write(cmd);
+                bw.write("exit\n");
+                bw.flush();
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    static class TouchEvent {
-        public static void sendEvent(String d, String t, String c, String v) {
+    public String getLocalHostIp() {
+        String ipaddress = "";
+        try {
+            Enumeration<NetworkInterface> en = NetworkInterface
+                    .getNetworkInterfaces();
+            // 遍历所用的网络接口
+            while (en.hasMoreElements()) {
+                NetworkInterface nif = en.nextElement();// 得到每一个网络接口绑定的所有ip
+                Enumeration<InetAddress> inet = nif.getInetAddresses();
+                // 遍历每一个接口绑定的所有ip
+                while (inet.hasMoreElements()) {
+                    InetAddress ip = inet.nextElement();
+                    if (!ip.isLoopbackAddress()
+                            && InetAddressUtils.isIPv4Address(ip
+                                    .getHostAddress())) {
+                        ipaddress = ip.getHostAddress();
+                    }
+                }
+
+            }
+        } catch (SocketException e) {
+            Log.d(Log.TAG, "error : " + e);
         }
+        return ipaddress;
+
     }
 }

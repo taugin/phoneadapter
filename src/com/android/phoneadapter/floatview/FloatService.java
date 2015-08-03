@@ -55,6 +55,9 @@ public class FloatService extends Service {
     @Override
     public void onDestroy() {
         mWindowManager.removeView(mPointerView);
+        if (mEventSocket != null) {
+            mEventSocket.destroy();
+        }
     }
 
     private WindowManager.LayoutParams getLayoutParams(boolean full) {

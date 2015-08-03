@@ -38,6 +38,8 @@ public class EventSocket {
     private OutputStream mOutputStream;
     private Context mContext;
     private FileOutputStream mDeviceOutputStream = null;
+    private ServerSocket mServerSocket;
+    private DatagramSocket mDatagramSocket;
 
     public EventSocket(Context context, PointerView floatView) {
         mContext = context;
@@ -58,6 +60,10 @@ public class EventSocket {
             UdpThread udpThread = new UdpThread();
             udpThread.start();
         }
+    }
+
+    public void destroy() {
+        running = false;
     }
 
     private void processCmdData(String data) {
@@ -140,21 +146,6 @@ public class EventSocket {
                 return;
             }
             if (Packet.REQUEST_TOUCH.equals(packet.command)) {
-                /*
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                DataOutputStream dos = new DataOutputStream(baos);
-                try {
-                    dos.writeInt(0);
-                    dos.writeInt(0);
-                    dos.writeShort(Short.parseShort(packet.type));
-                    dos.writeShort(Short.parseShort(packet.code));
-                    dos.writeInt(Integer.parseInt(packet.value));
-                    mDeviceOutputStream.write(baos.toByteArray());
-                    mDeviceOutputStream.flush();
-                    dos.close();
-                } catch (IOException e) {
-                    Log.d(Log.TAG, "error : " + e.getMessage());
-                }*/
                 EventSender.sendEvent(packet.type, packet.code, packet.value);
                 return;
             }
@@ -175,18 +166,21 @@ public class EventSocket {
 
     private void createUdp() {
         try {
-            DatagramSocket datagramSocket = new  DatagramSocket(8990);
+            if (mDatagramSocket == null) {
+                mDatagramSocket = new  DatagramSocket(8990);
+                mDatagramSocket.setReuseAddress(true);
+            }
             byte data[] = new byte[1024];
             DatagramPacket packet = new DatagramPacket(data, data.length);
             running = true;
             String packetData = null;
             EventSender.openDevice("/dev/input/event0");
             while(running) {
-                datagramSocket.receive(packet);
+                mDatagramSocket.receive(packet);
                 packetData = new String(packet.getData(), 0, packet.getLength());
                 processPosData(packetData);
             }
-            datagramSocket.close();
+            mDatagramSocket.close();
             EventSender.closeDevice();
         } catch (SocketException e) {
             Log.d(Log.TAG, "error : " + e);
@@ -197,11 +191,14 @@ public class EventSocket {
 
     private void createTcp() {
         try {
-            ServerSocket serverSocket = new ServerSocket(8989);
+            if (mServerSocket == null) {
+                mServerSocket = new ServerSocket(8989);
+                mServerSocket.setReuseAddress(true);
+            }
             running = true;
             while(running) {
                 Log.d(Log.TAG, "waiting for connection ...");
-                Socket socket = serverSocket.accept();
+                Socket socket = mServerSocket.accept();
                 InputStream inputStream = null;
                 try {
                     Log.d(Log.TAG, "Accept a connection ...");
