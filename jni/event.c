@@ -1,7 +1,7 @@
 #include <assert.h>
 #include "event.h"
 
-#define JNIREG_CLASS "com.android.phoneadapter.EventSender"
+#define JNIREG_CLASS "com/android/phoneadapter/EventSender"
 
 #ifdef __cplusplus
 extern "C" {

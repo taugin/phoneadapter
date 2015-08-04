@@ -2,7 +2,7 @@ package com.android.phoneadapter;
 
 public class EventSender {
 
-    private static int mFd = -1;
+    public static int mFd = -1;
     static {
         System.loadLibrary("event");
     }
@@ -13,7 +13,6 @@ public class EventSender {
     }
     public static void sendEvent(String type, String code, String value) {
         sendevent(mFd, type, code, value);
-        Log.d(Log.TAG, "mFd : " + mFd);
     }
     public static void closeDevice() {
         Log.d(Log.TAG, "mFd : " + mFd);

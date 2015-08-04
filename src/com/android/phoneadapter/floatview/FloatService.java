@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.WindowManager;
@@ -36,10 +37,7 @@ public class FloatService extends Service {
     @Override
     public void onCreate() {
         createPointerView();
-
         Log.d(Log.TAG, "");
-        mEventSocket = new EventSocket(this, mPointerView);
-        mEventSocket.listenOn();
     }
 
     @Override
@@ -49,11 +47,18 @@ public class FloatService extends Service {
             startService(new Intent(this, FloatService.class));
             return Service.START_STICKY;
         }
+        
+        String deviceNode = intent.getStringExtra("device_node");
+        if (!TextUtils.isEmpty(deviceNode)) {
+            mEventSocket = new EventSocket(this, mPointerView, deviceNode);
+            mEventSocket.listenOn();
+        }
         return Service.START_STICKY;
     }
 
     @Override
     public void onDestroy() {
+        Log.d(Log.TAG, "");
         mWindowManager.removeView(mPointerView);
         if (mEventSocket != null) {
             mEventSocket.destroy();
@@ -131,7 +136,7 @@ public class FloatService extends Service {
             DisplayMetrics metrics = getResources().getDisplayMetrics();
             JSONObject object = new JSONObject();
             try {
-                object.put("command", "response_screensize");
+                object.put("cmd", "response_screensize");
                 object.put("w", metrics.widthPixels);
                 object.put("h", metrics.heightPixels);
             } catch (JSONException e) {

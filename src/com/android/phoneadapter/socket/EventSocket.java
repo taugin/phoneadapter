@@ -1,10 +1,6 @@
 package com.android.phoneadapter.socket;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,6 +13,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.List;
 
 import org.apache.http.conn.util.InetAddressUtils;
 import org.json.JSONException;
@@ -29,6 +26,7 @@ import android.util.DisplayMetrics;
 import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.floatview.PointerView;
+import com.android.phoneadapter.socket.EventSocket.Packet.TouchEvent;
 import com.google.gson.Gson;
 
 public class EventSocket {
@@ -37,19 +35,17 @@ public class EventSocket {
     private PointerView mFloatView;
     private OutputStream mOutputStream;
     private Context mContext;
-    private FileOutputStream mDeviceOutputStream = null;
     private ServerSocket mServerSocket;
     private DatagramSocket mDatagramSocket;
+    private String mEventFile;
 
-    public EventSocket(Context context, PointerView floatView) {
+    public EventSocket(Context context, PointerView floatView, String eventFile) {
         mContext = context;
         mFloatView = floatView;
-        
-        try {
-            mDeviceOutputStream = new FileOutputStream("/dev/input/event0");
-        } catch (FileNotFoundException e) {
-            Log.d(Log.TAG, "error : " + e);
+        if (TextUtils.isEmpty(eventFile)) {
+            eventFile = "/dev/input/event0";
         }
+        mEventFile = eventFile;
     }
 
     public void listenOn() {
@@ -64,6 +60,16 @@ public class EventSocket {
 
     public void destroy() {
         running = false;
+        try {
+            if (mDatagramSocket != null) {
+                mDatagramSocket.close();
+            }
+            if (mServerSocket != null) {
+                mServerSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void processCmdData(String data) {
@@ -71,11 +77,11 @@ public class EventSocket {
         Gson gson = new Gson();
         Packet packet = gson.fromJson(data, Packet.class);
         if (packet != null) {
-            if (Packet.REQUEST_SCREENSIZE.equals(packet.command)) {
+            if (Packet.REQUEST_SCREENSIZE.equals(packet.cmd)) {
                 DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
                 JSONObject object = new JSONObject();
                 try {
-                    object.put("command", "response_screensize");
+                    object.put("cmd", "response_screensize");
                     object.put("w", metrics.widthPixels);
                     object.put("h", metrics.heightPixels);
                 } catch (JSONException e) {
@@ -85,10 +91,10 @@ public class EventSocket {
                 return;
             }
 
-            if (Packet.REQUEST_UDPSERVER.equals(packet.command)) {
+            if (Packet.REQUEST_UDPSERVER.equals(packet.cmd)) {
                 JSONObject object = new JSONObject();
                 try {
-                    object.put("command", "response_udpserver");
+                    object.put("cmd", "response_udpserver");
                     object.put("addr", getLocalHostIp());
                     object.put("port", 8990);
                 } catch (JSONException e) {
@@ -98,7 +104,7 @@ public class EventSocket {
                 return;
             }
             
-            if (Packet.REQUEST_POSITION.equals(packet.command)) {
+            if (Packet.REQUEST_POSITION.equals(packet.cmd)) {
                 mFloatView.updatePositionFromOuter(packet.x, packet.y);
                 // Log.d(Log.TAG, "pressed : " + packet.pressed);
                 if (packet.pressed) {
@@ -137,16 +143,21 @@ public class EventSocket {
     }
 
     private void processPosData(String data) {
-        Log.d(Log.TAG, "data : " + data);
+        // Log.d(Log.TAG, "data : " + data);
         Gson gson = new Gson();
         Packet packet = gson.fromJson(data, Packet.class);
         if (packet != null) {
-            if (Packet.REQUEST_POSITION.equals(packet.command)) {
+            if (Packet.REQUEST_POSITION.equals(packet.cmd)) {
                 mFloatView.updatePositionFromOuter(packet.x, packet.y);
                 return;
             }
-            if (Packet.REQUEST_TOUCH.equals(packet.command)) {
-                EventSender.sendEvent(packet.type, packet.code, packet.value);
+            if (Packet.REQUEST_TOUCH.equals(packet.cmd)) {
+                if (packet.touch != null) {
+                    for (TouchEvent event : packet.touch) {
+                        Log.d(Log.TAG, EventSender.mFd + " " + mEventFile + " " + event.type + " " + event.code + " " + event.value);
+                        EventSender.sendEvent(event.type, event.code, event.value);
+                    }
+                }
                 return;
             }
         }
@@ -174,7 +185,7 @@ public class EventSocket {
             DatagramPacket packet = new DatagramPacket(data, data.length);
             running = true;
             String packetData = null;
-            EventSender.openDevice("/dev/input/event0");
+            EventSender.openDevice(mEventFile);
             while(running) {
                 mDatagramSocket.receive(packet);
                 packetData = new String(packet.getData(), 0, packet.getLength());
@@ -254,14 +265,17 @@ public class EventSocket {
         public static final String REQUEST_POSITION = "request_position";
         public static final String REQUEST_SCREENSIZE = "request_screensize";
         public static final String REQUEST_UDPSERVER = "request_udpserver";
-        public static final String REQUEST_TOUCH = "request_touch";
-        public String command;
+        public static final String REQUEST_TOUCH = "touch";
+        public String cmd;
         public int x;
         public int y;
         public boolean pressed;
-        public String device;
-        public String type;
-        public String code;
-        public String value;
+        public List<TouchEvent> touch;
+        class TouchEvent {
+            public String device;
+            public String type;
+            public String code;
+            public String value;
+        }
     }
 }
