@@ -7,15 +7,17 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
-import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
+import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.R;
 
@@ -28,7 +30,13 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
     private int mPointerY;
     private boolean mRunning = false;
     private Bitmap mBitmap;
-    private Path mPointerPath;
+    private RectF mOutRectF;
+    private boolean mDrawCircleAnimation = false;
+    private int sweepDegree = 0;
+    private Handler mHandler;
+
+    private Rect mSweepRect;
+    private int mSweepLength = 100;
 
     public MaskView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
@@ -36,21 +44,38 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         getHolder().addCallback(this);
         getHolder().setFormat(PixelFormat.TRANSPARENT);
         mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.cursor);
-        mPointerPath = new Path();
+        mOutRectF = new RectF();
+        mHandler = new Handler();
+        mSweepRect = new Rect();
+
         mPaint = new Paint();
-        // mPaint.setStyle(Style.STROKE);
+        mPaint.setStyle(Style.STROKE);
         mPaint.setColor(Color.RED);
+        mPaint.setAntiAlias(true);
         mViewRect = new Rect();
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         mViewRect.left = 0;
         mViewRect.top = 0;
         mViewRect.right = displayMetrics.widthPixels;
         mViewRect.bottom = displayMetrics.heightPixels;
+
+        mPointerX = mViewRect.width() / 2;
+        mPointerY = mViewRect.height() / 2;
     }
 
     public void updateTouchPosition(int x, int y) {
         mPointerX = x;
         mPointerY = y;
+        if (!mSweepRect.contains(mPointerX, mPointerY)) {
+            startSweepAnimation();
+        }
+    }
+
+    private void startSweepAnimation() {
+        sweepDegree = 0;
+        mDrawCircleAnimation = false;
+        mHandler.removeCallbacks(mSweepRunnable);
+        mHandler.postDelayed(mSweepRunnable, 1000);
     }
 
     @Override
@@ -78,25 +103,52 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         mRunning = false;
     }
 
-    private void drawMouseIcon(Canvas canvas) {
-        mPointerPath.reset();
-        mPointerPath.moveTo(mPointerX, mPointerY);
-        mPointerPath.lineTo(mPointerX, mPointerY + 50);
-        mPointerPath.lineTo(mPointerX + 30, mPointerY - 30);
-        mPointerPath.lineTo(mPointerX, mPointerY);
-        canvas.drawPath(mPointerPath, mPaint);
+    private void setOutRect() {
+        if (mBitmap != null) {
+            int w = mBitmap.getWidth();
+            int h = mBitmap.getHeight();
+            int radius = w > h ? w : h;
+            int cx = mPointerX + w / 2;
+            int cy = mPointerY + h / 2;
+            mOutRectF.left = cx - radius;
+            mOutRectF.top = cy - radius;
+            mOutRectF.right = cx + radius;
+            mOutRectF.bottom = cy + radius;
+        }
+    }
+
+    private void sweepAnimationEnd() {
+        sweepDegree = 0;
+        mDrawCircleAnimation = false;
+        mSweepRect.setEmpty();
+        sendTouchEvent();
+    }
+
+    private void drawCircleAnimation(Canvas canvas) {
+        setOutRect();
+        int color = mPaint.getColor();
+        float strokeWidth = mPaint.getStrokeWidth();
+        mPaint.setColor(Color.WHITE);
+        mPaint.setStrokeWidth(5);
+        sweepDegree += 5;
+        if (sweepDegree >= 360) {
+            sweepAnimationEnd();
+        }
+        canvas.drawArc(mOutRectF, 0, sweepDegree, false, mPaint);
+        mPaint.setColor(color);
+        mPaint.setStrokeWidth(strokeWidth);
     }
 
     private void draw() {
         Canvas canvas = getHolder().lockCanvas();
-        Log.d(Log.TAG, "canvas : " + canvas);
         if (canvas == null) {
             return ;
         }
         canvas.drawColor(Color.TRANSPARENT,Mode.CLEAR);
         canvas.drawBitmap(mBitmap, mPointerX, mPointerY, null);
-        // canvas.drawCircle(mPointerX, mPointerY, 10, mPaint);
-        // drawMouseIcon(canvas);
+        if (mDrawCircleAnimation) {
+            drawCircleAnimation(canvas);
+        }
         if (canvas != null) {
             getHolder().unlockCanvasAndPost(canvas);
         }
@@ -111,5 +163,30 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
                 e.printStackTrace();
             }
         }
+    }
+
+    private Runnable mSweepRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mDrawCircleAnimation = true;
+            mSweepRect.left = mPointerX - mSweepLength;
+            mSweepRect.top = mPointerY - mSweepLength;
+            mSweepRect.right =  mPointerX + mSweepLength;
+            mSweepRect.bottom =  mPointerY + mSweepLength;
+        }
+    };
+
+    private void sendTouchEvent() {
+        EventSender.sendEvent("3", "47", String.valueOf(0)); // index
+        EventSender.sendEvent("3", "57", String.valueOf(10000));
+        EventSender.sendEvent("3", "53", "" + mPointerX);  // x
+        EventSender.sendEvent("3", "54", "" + mPointerY);  // y
+        EventSender.sendEvent("3", "58", "848"); // pressure
+        EventSender.sendEvent("3", "48", "6"); // major
+        EventSender.sendEvent("0", "0", "0"); // syc
+
+        EventSender.sendEvent("3", "47", String.valueOf(0)); // index
+        EventSender.sendEvent("3", "57", String.valueOf(-1));
+        EventSender.sendEvent("0", "0", "0"); // syc
     }
 }

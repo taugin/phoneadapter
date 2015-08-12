@@ -142,7 +142,7 @@ public class FloatService extends Service {
         WindowManager.LayoutParams params = getMaskLayoutParams();
         maskView = new MaskView(getApplicationContext(), mWindowManager,
                 params);
-        maskView.setBackgroundColor(Color.BLACK);
+        // maskView.setBackgroundColor(Color.BLACK);
 
         mWindowManager.addView(maskView, params);
         return maskView;
@@ -155,7 +155,7 @@ public class FloatService extends Service {
                                                              // statusbar
         params.format = PixelFormat.RGBA_8888;
         // params.alpha = 1.0f;
-        params.alpha = 0.5f;
+        params.alpha = 0f;
 
         params.flags = LayoutParams.FLAG_FULLSCREEN
                 | LayoutParams.FLAG_NOT_FOCUSABLE
