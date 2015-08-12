@@ -7,6 +7,7 @@ import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
 import android.text.TextUtils;
@@ -26,8 +27,8 @@ public class FloatService extends Service {
 
     private WindowManager mWindowManager = null;
 
-    private PointerView mPointerView = null;
     private EventSocket mEventSocket;
+    private MaskView mMaskView;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -36,8 +37,19 @@ public class FloatService extends Service {
 
     @Override
     public void onCreate() {
-        createPointerView();
         Log.d(Log.TAG, "");
+        createFloatView();
+    }
+
+    private void createFloatView() {
+        mMaskView = createMaskView();
+    }
+
+    private void removeFloatView() {
+        if (mMaskView != null) {
+            mWindowManager.removeView(mMaskView);
+            mMaskView = null;
+        }
     }
 
     @Override
@@ -50,7 +62,7 @@ public class FloatService extends Service {
         
         String deviceNode = intent.getStringExtra("device_node");
         if (!TextUtils.isEmpty(deviceNode)) {
-            mEventSocket = new EventSocket(this, mPointerView, deviceNode);
+            mEventSocket = new EventSocket(this, this, deviceNode);
             mEventSocket.listenOn();
         }
         return Service.START_STICKY;
@@ -59,13 +71,13 @@ public class FloatService extends Service {
     @Override
     public void onDestroy() {
         Log.d(Log.TAG, "");
-        mWindowManager.removeView(mPointerView);
+        removeFloatView();
         if (mEventSocket != null) {
             mEventSocket.destroy();
         }
     }
 
-    private WindowManager.LayoutParams getLayoutParams(boolean full) {
+    private WindowManager.LayoutParams getPointerLayoutParams() {
         mWindowManager = (WindowManager) getSystemService(Service.WINDOW_SERVICE);
         WindowManager.LayoutParams params = new WindowManager.LayoutParams();
         params.type = LayoutParams.TYPE_SYSTEM_ERROR; // Can be drag to
@@ -92,19 +104,15 @@ public class FloatService extends Service {
 
         DisplayMetrics dm = new DisplayMetrics();
         dm = getResources().getDisplayMetrics();
-        if (full) {
-            params.width = dm.widthPixels;
-            params.height = dm.heightPixels;
-        } else {
-            params.width = LayoutParams.WRAP_CONTENT;
-            params.height = LayoutParams.WRAP_CONTENT;
-        }
+        params.width = LayoutParams.WRAP_CONTENT;
+        params.height = LayoutParams.WRAP_CONTENT;
         return params;
     }
 
-    private void createPointerView() {
+    private PointerView createPointerView() {
+        Log.d(Log.TAG, "");
         PointerView floatView = null;
-        WindowManager.LayoutParams params = getLayoutParams(false);
+        WindowManager.LayoutParams params = getPointerLayoutParams();
         floatView = new PointerView(getApplicationContext(), mWindowManager,
                 params);
         floatView.setImageResource(R.drawable.cursor);
@@ -124,13 +132,61 @@ public class FloatService extends Service {
                 Log.d(TAG, "HaHa, onLongPress");
             }
         });
-        mPointerView = floatView;
-        mWindowManager.addView(mPointerView, params);
+        mWindowManager.addView(floatView, params);
+        return floatView;
     }
 
-    @SuppressLint("DefaultLocale") @Override
+    private MaskView createMaskView() {
+        Log.d(Log.TAG, "");
+        MaskView maskView = null;
+        WindowManager.LayoutParams params = getMaskLayoutParams();
+        maskView = new MaskView(getApplicationContext(), mWindowManager,
+                params);
+        maskView.setBackgroundColor(Color.BLACK);
+
+        mWindowManager.addView(maskView, params);
+        return maskView;
+    }
+
+    private WindowManager.LayoutParams getMaskLayoutParams() {
+        mWindowManager = (WindowManager) getSystemService(Service.WINDOW_SERVICE);
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.type = LayoutParams.TYPE_SYSTEM_ERROR; // Can be drag to
+                                                             // statusbar
+        params.format = PixelFormat.RGBA_8888;
+        // params.alpha = 1.0f;
+        params.alpha = 0.5f;
+
+        params.flags = LayoutParams.FLAG_FULLSCREEN
+                | LayoutParams.FLAG_NOT_FOCUSABLE
+                | LayoutParams.FLAG_NOT_TOUCHABLE
+                | LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+
+        /**
+         * type = LayoutParams.TYPE_SYSTEM_ERROR and flags =
+         * LayoutParams.FLAG_LAYOUT_IN_SCREEN can be drag to statusbar
+         */
+        /*
+         * mLayoutParams.flags=LayoutParams.FLAG_NOT_TOUCH_MODAL |
+         * LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_NOT_TOUCHABLE;
+         */
+        params.gravity = Gravity.LEFT | Gravity.TOP;
+        params.x = 0;
+        params.y = 0;
+
+        DisplayMetrics dm = new DisplayMetrics();
+        dm = getResources().getDisplayMetrics();
+        params.width = dm.widthPixels;
+        params.height = dm.heightPixels;
+        return params;
+    }
+
+    @SuppressLint("DefaultLocale") 
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        removeFloatView();
+        createFloatView();
         Log.d(Log.TAG, "newConfig : " + newConfig.orientation + " , mEventSocket : " + mEventSocket);
         if (mEventSocket != null) {
             DisplayMetrics metrics = getResources().getDisplayMetrics();
@@ -143,6 +199,12 @@ public class FloatService extends Service {
                 Log.d(Log.TAG, "error : " + e);
             }
             mEventSocket.sendData(object.toString());
+        }
+    }
+
+    public void updatePointerPosition(int x, int y) {
+        if (mMaskView != null) {
+            mMaskView.updateTouchPosition(x, y);
         }
     }
 }

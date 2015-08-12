@@ -1,8 +1,5 @@
 package com.android.phoneadapter.floatview;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;

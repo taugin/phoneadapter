@@ -25,23 +25,24 @@ import android.util.DisplayMetrics;
 
 import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
-import com.android.phoneadapter.floatview.PointerView;
+import com.android.phoneadapter.floatview.FloatService;
+import com.android.phoneadapter.floatview.MaskView;
 import com.android.phoneadapter.socket.EventSocket.Packet.TouchEvent;
 import com.google.gson.Gson;
 
 public class EventSocket {
 
     private boolean running = false;
-    private PointerView mFloatView;
     private OutputStream mOutputStream;
     private Context mContext;
     private ServerSocket mServerSocket;
     private DatagramSocket mDatagramSocket;
     private String mEventFile;
+    private FloatService mFloatService;
 
-    public EventSocket(Context context, PointerView floatView, String eventFile) {
+    public EventSocket(Context context, FloatService floatService, String eventFile) {
         mContext = context;
-        mFloatView = floatView;
+        mFloatService = floatService;
         if (TextUtils.isEmpty(eventFile)) {
             eventFile = "/dev/input/event0";
         }
@@ -103,15 +104,6 @@ public class EventSocket {
                 sendData(object.toString());
                 return;
             }
-            
-            if (Packet.REQUEST_POSITION.equals(packet.cmd)) {
-                mFloatView.updatePositionFromOuter(packet.x, packet.y);
-                // Log.d(Log.TAG, "pressed : " + packet.pressed);
-                if (packet.pressed) {
-                    // EventSender.sendevent(packet.device, packet.type, packet.code, packet.value);
-                }
-                return;
-            }
         }
     }
 
@@ -148,13 +140,15 @@ public class EventSocket {
         Packet packet = gson.fromJson(data, Packet.class);
         if (packet != null) {
             if (Packet.REQUEST_POSITION.equals(packet.cmd)) {
-                mFloatView.updatePositionFromOuter(packet.x, packet.y);
+                if (mFloatService != null) {
+                    mFloatService.updatePointerPosition(packet.x, packet.y);
+                }
                 return;
             }
             if (Packet.REQUEST_TOUCH.equals(packet.cmd)) {
                 if (packet.touch != null) {
                     for (TouchEvent event : packet.touch) {
-                        Log.d(Log.TAG, EventSender.mFd + " " + mEventFile + " " + event.type + " " + event.code + " " + event.value);
+                        // Log.d(Log.TAG, EventSender.mFd + " " + mEventFile + " " + event.type + " " + event.code + " " + event.value);
                         EventSender.sendEvent(event.type, event.code, event.value);
                     }
                 }
