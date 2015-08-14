@@ -108,11 +108,12 @@ public class EventHandler {
     }
 
     private int getPointerX(Motion motion) {
+        Log.d(Log.TAG, "motion.source : " + motion.source);
         if (mFloatService.getResources().getConfiguration().orientation == 2) {
             if (motion.source == 0) {
                 return motion.y;
             }
-            return mHeight - motion.y;
+            return motion.x;
         }
         return motion.x;
     }
@@ -122,7 +123,7 @@ public class EventHandler {
             if (motion.source == 0) {
                 return mHeight - motion.x;
             }
-            return motion.x;
+            return motion.y;
         }
         return motion.y;
     }
