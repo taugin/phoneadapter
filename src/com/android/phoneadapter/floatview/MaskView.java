@@ -17,9 +17,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
-import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.R;
+import com.android.phoneadapter.event.EventSender;
 
 public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         Runnable {

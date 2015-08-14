@@ -1,4 +1,6 @@
-package com.android.phoneadapter;
+package com.android.phoneadapter.event;
+
+import com.android.phoneadapter.Log;
 
 public class EventSender {
 

@@ -23,10 +23,9 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 
-import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
+import com.android.phoneadapter.event.EventSender;
 import com.android.phoneadapter.floatview.FloatService;
-import com.android.phoneadapter.floatview.MaskView;
 import com.android.phoneadapter.socket.EventSocket.Packet.TouchEvent;
 import com.google.gson.Gson;
 
