@@ -14,9 +14,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -30,7 +28,8 @@ public class MainActivity extends Activity implements OnClickListener {
 
     private TextView mClientIp;
     private EditText mServerIP;
-    private EditText mDeviceNode;
+    private EditText mTouchDeviceNode;
+    private EditText mKeyDeviceNode;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,7 +37,8 @@ public class MainActivity extends Activity implements OnClickListener {
         Button button = null;
         mServerIP = (EditText) findViewById(R.id.server_ip);
         mClientIp = (TextView) findViewById(R.id.client_ip);
-        mDeviceNode = (EditText) findViewById(R.id.device_node);
+        mTouchDeviceNode = (EditText) findViewById(R.id.touch_device_node);
+        mKeyDeviceNode = (EditText) findViewById(R.id.key_device_node);
         button = (Button) findViewById(R.id.start_server);
         button.setOnClickListener(this);
         button = (Button) findViewById(R.id.start_touch);
@@ -58,8 +58,6 @@ public class MainActivity extends Activity implements OnClickListener {
     public void onClick(View v) {
         if (v.getId() == R.id.start_server) {
             Intent intent = new Intent(this, FloatService.class);
-            String deviceNode = mDeviceNode.getText().toString();
-            intent.putExtra("device_node", deviceNode);
             stopService(intent);
             startService(intent);
             finish();
@@ -73,13 +71,19 @@ public class MainActivity extends Activity implements OnClickListener {
                 Toast.makeText(this, "Set success", Toast.LENGTH_SHORT).show();
             }
         } else if (v.getId() == R.id.set_rw) {
-            String deviceNode = mDeviceNode.getText().toString();
+            String touchDeviceNode = mTouchDeviceNode.getText().toString();
+            String keyDeviceNode = mKeyDeviceNode.getText().toString();
+            PreferenceManager.getDefaultSharedPreferences(this).edit().putString("touch_device", touchDeviceNode).commit();
+            PreferenceManager.getDefaultSharedPreferences(this).edit().putString("key_device", keyDeviceNode).commit();
             try {
                 Process p = Runtime.getRuntime().exec("su");
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
-                String cmd = "chmod 666 " + deviceNode + "\n";
-                Log.d(Log.TAG, "cmd : " + cmd);
-                bw.write(cmd);
+                String cmd1 = "chmod 666 " + touchDeviceNode + "\n";
+                String cmd2 = "chmod 666 " + keyDeviceNode + "\n";
+                Log.d(Log.TAG, "cmd1 : " + cmd1);
+                Log.d(Log.TAG, "cmd2 : " + cmd2);
+                bw.write(cmd1);
+                bw.write(cmd2);
                 bw.write("exit\n");
                 bw.flush();
                 bw.close();

@@ -7,16 +7,24 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        >
 
         <EditText
-            android:id="@+id/device_node"
+            android:id="@+id/touch_device_node"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="/dev/input/event0"
             android:textAppearance="?android:attr/textAppearanceLarge" />
-
+        <EditText
+            android:id="@+id/key_device_node"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="/dev/input/event1"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
         <Button
             android:id="@+id/set_rw"
             android:layout_width="match_parent"

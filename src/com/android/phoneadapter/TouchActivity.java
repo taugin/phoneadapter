@@ -21,6 +21,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -42,6 +43,27 @@ public class TouchActivity extends Activity {
     }
 
     
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.d(Log.TAG, "keyCode : " + keyCode);
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            mTouchEvent.sendEvent(1, 0, 0, 0, 0, 0, 0, 2);
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
+            mTouchEvent.sendEvent(1, 0, 0, 0, 0, 0, 1, 2);
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            finish();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -99,57 +121,27 @@ public class TouchActivity extends Activity {
         public boolean onTouchEvent(MotionEvent event) {
             int pointerIndex = event.getActionIndex();
             int slot = event.getPointerId(pointerIndex);
-            String curX = String.valueOf(event.getX(pointerIndex));
-            String curY = String.valueOf(event.getY(pointerIndex));
             switch(event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                Log.d(Log.TAG, "ACTION_DOWN -> slot : " + slot + " , pointerIndex : " + pointerIndex);
-                mTouchEvent.addTouchEvent("3", "47", String.valueOf(slot)); // index
-                mTouchEvent.addTouchEvent("3", "57", String.valueOf(TID++));
-                mTouchEvent.addTouchEvent("3", "53", curX);  // x
-                mTouchEvent.addTouchEvent("3", "54", curY);  // y
-                mTouchEvent.addTouchEvent("3", "58", "848"); // pressure
-                mTouchEvent.addTouchEvent("3", "48", "6"); // major
-                mTouchEvent.addTouchEvent("0", "0", "0"); // syc
-                mTouchEvent.sendEvent();
+                mTouchEvent.sendEvent(0, slot, 0, 1, (int)event.getX(pointerIndex), (int)event.getY(pointerIndex), 0, 0);
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
                 Log.d(Log.TAG, "ACTION_POINTER_DOWN -> slot : " + slot + " , pointerIndex : " + pointerIndex + " , pointerCount : " + event.getPointerCount());
-                mTouchEvent.addTouchEvent("3", "47", String.valueOf(slot)); // index
-                mTouchEvent.addTouchEvent("3", "57", String.valueOf(TID++));
-                mTouchEvent.addTouchEvent("3", "53", curX);  // x
-                mTouchEvent.addTouchEvent("3", "54", curY);  // y
-                mTouchEvent.addTouchEvent("3", "58", "848"); // pressure
-                mTouchEvent.addTouchEvent("3", "48", "6"); // major
-                mTouchEvent.addTouchEvent("0", "0", "0"); // syc
-                mTouchEvent.sendEvent();
+                mTouchEvent.sendEvent(0, slot, 0, 1, (int)event.getX(pointerIndex), (int)event.getY(pointerIndex), 0, 0);
                 break;
             case MotionEvent.ACTION_POINTER_UP:
                 Log.d(Log.TAG, "ACTION_POINTER_UP -> slot : " + slot + " , pointerIndex : " + pointerIndex);
-                mTouchEvent.addTouchEvent("3", "47", String.valueOf(slot)); // index
-                mTouchEvent.addTouchEvent("3", "57", String.valueOf(-1));
-                mTouchEvent.addTouchEvent("0", "0", "0"); // syc
-                mTouchEvent.sendEvent();
+                mTouchEvent.sendEvent(0, slot, 0, 0, (int)event.getX(pointerIndex), (int)event.getY(pointerIndex), 0, 0);
                 break;
             case MotionEvent.ACTION_UP:
                 Log.d(Log.TAG, "ACTION_UP -> slot : " + slot + " , pointerIndex : " + pointerIndex);
-                mTouchEvent.addTouchEvent("3", "47", String.valueOf(slot)); // index
-                mTouchEvent.addTouchEvent("3", "57", String.valueOf(-1));
-                mTouchEvent.addTouchEvent("0", "0", "0"); // syc
-                mTouchEvent.sendEvent();
+                mTouchEvent.sendEvent(0, slot, 0, 0, (int)event.getX(pointerIndex), (int)event.getY(pointerIndex), 0, 0);
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 for (int i = 0; i < event.getPointerCount(); i++) {
-                    mTouchEvent.addTouchEvent("3", "47", String.valueOf(event.getPointerId(i))); // index
-                    curX = String.valueOf(event.getX(i));
-                    mTouchEvent.addTouchEvent("3", "53", curX);  // x
-                    curY = String.valueOf(event.getY(i));
-                    mTouchEvent.addTouchEvent("3", "54", curY);  // y
-                    mTouchEvent.addTouchEvent("3", "58", "848"); // pressure
-                    mTouchEvent.addTouchEvent("0", "0", "0"); // syc
+                    mTouchEvent.sendEvent(0, event.getPointerId(i), 1, 2, (int)event.getX(i), (int)event.getY(i), 0, 0);
                 }
-                mTouchEvent.sendEvent();
                 break;
             }
             return true;
@@ -157,27 +149,17 @@ public class TouchActivity extends Activity {
     }
 
     class TouchEvent {
-        private JSONArray mEventArray;
-        public void addTouchEvent(String t, String c, String v) {
-            if (mEventArray == null) {
-                mEventArray = new JSONArray();
-            }
+        public void sendEvent(int type, int slot, int pressed, int action, int x, int y, int key, int state) {
             JSONObject jobject = new JSONObject();
             try {
-                jobject.put("device", "");
-                jobject.put("type", t);
-                jobject.put("code", c);
-                jobject.put("value", v);
-                mEventArray.put(jobject);
-            } catch (JSONException e) {
-                Log.d(Log.TAG, "error : " + e);
-            }
-        }
-        public void sendEvent() {
-            JSONObject jobject = new JSONObject();
-            try {
-                jobject.put("cmd", "touch");
-                jobject.put("touch", mEventArray);
+                jobject.put("type", type);
+                jobject.put("slot", slot);
+                jobject.put("pressed", pressed);
+                jobject.put("action", action);
+                jobject.put("x", x);
+                jobject.put("y", y);
+                jobject.put("key", key);
+                jobject.put("state", state);
             } catch (JSONException e) {
                 Log.d(Log.TAG, "error : " + e);
             }
@@ -186,7 +168,6 @@ public class TouchActivity extends Activity {
             message.obj = sendData;
             Log.d(Log.TAG, "sendData : " + sendData);
             mWorkHandler.sendMessage(message);
-            mEventArray = null;
         }
     }
 }

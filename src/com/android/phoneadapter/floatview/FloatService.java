@@ -7,10 +7,8 @@ import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
-import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.WindowManager;
@@ -18,6 +16,7 @@ import android.view.WindowManager.LayoutParams;
 
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.R;
+import com.android.phoneadapter.event.EventHandler;
 import com.android.phoneadapter.floatview.PointerView.OnLongPressListener;
 import com.android.phoneadapter.floatview.PointerView.OnPressListener;
 import com.android.phoneadapter.socket.EventSocket;
@@ -29,6 +28,7 @@ public class FloatService extends Service {
 
     private EventSocket mEventSocket;
     private MaskView mMaskView;
+    private EventHandler mEventHandler;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -39,6 +39,9 @@ public class FloatService extends Service {
     public void onCreate() {
         Log.d(Log.TAG, "");
         createFloatView();
+        mEventHandler = new EventHandler(this);
+        mEventSocket = new EventSocket(this, mEventHandler);
+        mEventSocket.listenOn();
     }
 
     private void createFloatView() {
@@ -58,12 +61,6 @@ public class FloatService extends Service {
             stopSelf(startId);
             startService(new Intent(this, FloatService.class));
             return Service.START_STICKY;
-        }
-        
-        String deviceNode = intent.getStringExtra("device_node");
-        if (!TextUtils.isEmpty(deviceNode)) {
-            mEventSocket = new EventSocket(this, this, deviceNode);
-            mEventSocket.listenOn();
         }
         return Service.START_STICKY;
     }
@@ -199,6 +196,9 @@ public class FloatService extends Service {
                 Log.d(Log.TAG, "error : " + e);
             }
             mEventSocket.sendData(object.toString());
+        }
+        if (mEventHandler != null) {
+            mEventHandler.updateScreen();
         }
     }
 

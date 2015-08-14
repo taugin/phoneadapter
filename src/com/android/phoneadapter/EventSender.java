@@ -1,22 +1,22 @@
-package com.android.phoneadapter.event;
+package com.android.phoneadapter;
 
-import com.android.phoneadapter.Log;
 
 public class EventSender {
 
-    public static int mFd = -1;
+    public int mFd = -1;
     static {
         System.loadLibrary("event");
     }
 
-    public static void openDevice(String device) {
+    public void openDevice(String device) {
         mFd = open(device);
         Log.d(Log.TAG, "mFd : " + mFd);
     }
-    public static void sendEvent(String type, String code, String value) {
+    public void sendEvent(String type, String code, String value) {
         sendevent(mFd, type, code, value);
+        Log.d(Log.TAG, type + " " + code + " " + value);
     }
-    public static void closeDevice() {
+    public void closeDevice() {
         Log.d(Log.TAG, "mFd : " + mFd);
         close(mFd);
     }

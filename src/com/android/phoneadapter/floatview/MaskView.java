@@ -17,9 +17,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
+import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.R;
-import com.android.phoneadapter.event.EventSender;
 
 public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         Runnable {
@@ -121,7 +121,6 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         sweepDegree = 0;
         mDrawCircleAnimation = false;
         mSweepRect.setEmpty();
-        sendTouchEvent();
     }
 
     private void drawCircleAnimation(Canvas canvas) {
@@ -146,7 +145,7 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         }
         canvas.drawColor(Color.TRANSPARENT,Mode.CLEAR);
         canvas.drawBitmap(mBitmap, mPointerX, mPointerY, null);
-        if (mDrawCircleAnimation) {
+        if (mDrawCircleAnimation && false) {
             drawCircleAnimation(canvas);
         }
         if (canvas != null) {
@@ -175,18 +174,4 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
             mSweepRect.bottom =  mPointerY + mSweepLength;
         }
     };
-
-    private void sendTouchEvent() {
-        EventSender.sendEvent("3", "47", String.valueOf(0)); // index
-        EventSender.sendEvent("3", "57", String.valueOf(10000));
-        EventSender.sendEvent("3", "53", "" + mPointerX);  // x
-        EventSender.sendEvent("3", "54", "" + mPointerY);  // y
-        EventSender.sendEvent("3", "58", "848"); // pressure
-        EventSender.sendEvent("3", "48", "6"); // major
-        EventSender.sendEvent("0", "0", "0"); // syc
-
-        EventSender.sendEvent("3", "47", String.valueOf(0)); // index
-        EventSender.sendEvent("3", "57", String.valueOf(-1));
-        EventSender.sendEvent("0", "0", "0"); // syc
-    }
 }

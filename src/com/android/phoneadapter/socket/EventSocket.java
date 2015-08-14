@@ -20,13 +20,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
-import android.text.TextUtils;
 import android.util.DisplayMetrics;
 
 import com.android.phoneadapter.Log;
-import com.android.phoneadapter.event.EventSender;
-import com.android.phoneadapter.floatview.FloatService;
-import com.android.phoneadapter.socket.EventSocket.Packet.TouchEvent;
+import com.android.phoneadapter.event.EventHandler;
+import com.android.phoneadapter.event.Motion;
 import com.google.gson.Gson;
 
 public class EventSocket {
@@ -36,16 +34,11 @@ public class EventSocket {
     private Context mContext;
     private ServerSocket mServerSocket;
     private DatagramSocket mDatagramSocket;
-    private String mEventFile;
-    private FloatService mFloatService;
+    private EventHandler mEventHandler;
 
-    public EventSocket(Context context, FloatService floatService, String eventFile) {
+    public EventSocket(Context context, EventHandler handler) {
         mContext = context;
-        mFloatService = floatService;
-        if (TextUtils.isEmpty(eventFile)) {
-            eventFile = "/dev/input/event0";
-        }
-        mEventFile = eventFile;
+        mEventHandler = handler;
     }
 
     public void listenOn() {
@@ -133,27 +126,11 @@ public class EventSocket {
 
     }
 
-    private void processPosData(String data) {
+    private void passEventToHandler(String data) {
         // Log.d(Log.TAG, "data : " + data);
         Gson gson = new Gson();
-        Packet packet = gson.fromJson(data, Packet.class);
-        if (packet != null) {
-            if (Packet.REQUEST_POSITION.equals(packet.cmd)) {
-                if (mFloatService != null) {
-                    mFloatService.updatePointerPosition(packet.x, packet.y);
-                }
-                return;
-            }
-            if (Packet.REQUEST_TOUCH.equals(packet.cmd)) {
-                if (packet.touch != null) {
-                    for (TouchEvent event : packet.touch) {
-                        // Log.d(Log.TAG, EventSender.mFd + " " + mEventFile + " " + event.type + " " + event.code + " " + event.value);
-                        EventSender.sendEvent(event.type, event.code, event.value);
-                    }
-                }
-                return;
-            }
-        }
+        Motion motion = gson.fromJson(data, Motion.class);
+        mEventHandler.processMotion(motion);
     }
 
     class TcpThread extends Thread {
@@ -178,14 +155,14 @@ public class EventSocket {
             DatagramPacket packet = new DatagramPacket(data, data.length);
             running = true;
             String packetData = null;
-            EventSender.openDevice(mEventFile);
+            mEventHandler.openTouchDevice();
             while(running) {
                 mDatagramSocket.receive(packet);
                 packetData = new String(packet.getData(), 0, packet.getLength());
-                processPosData(packetData);
+                passEventToHandler(packetData);
             }
             mDatagramSocket.close();
-            EventSender.closeDevice();
+            mEventHandler.closeTouchDevice();
         } catch (SocketException e) {
             Log.d(Log.TAG, "error : " + e);
         } catch (IOException e) {
