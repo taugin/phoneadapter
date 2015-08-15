@@ -52,6 +52,11 @@ public class MainActivity extends Activity implements OnClickListener {
         mClientIp.setText(getLocalHostIp());
         String serverIp = PreferenceManager.getDefaultSharedPreferences(this).getString("server_ip", null);
         mServerIP.setText(serverIp);
+
+        String touchDevice = PreferenceManager.getDefaultSharedPreferences(this).getString("touch_device", "/dev/input/event0");
+        mTouchDeviceNode.setText(touchDevice);
+        String keyDevice = PreferenceManager.getDefaultSharedPreferences(this).getString("key_device", "/dev/input/event0");
+        mKeyDeviceNode.setText(keyDevice);
     }
 
     @Override
