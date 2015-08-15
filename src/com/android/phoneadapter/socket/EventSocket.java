@@ -162,12 +162,12 @@ public class EventSocket {
                 passEventToHandler(packetData);
             }
             mDatagramSocket.close();
-            mEventHandler.closeTouchDevice();
         } catch (SocketException e) {
             Log.d(Log.TAG, "error : " + e);
         } catch (IOException e) {
             Log.d(Log.TAG, "error : " + e);
         }
+        mEventHandler.closeTouchDevice();
     }
 
     private void createTcp() {

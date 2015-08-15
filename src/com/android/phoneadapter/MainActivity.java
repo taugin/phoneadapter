@@ -45,6 +45,8 @@ public class MainActivity extends Activity implements OnClickListener {
         button.setOnClickListener(this);
         button = (Button) findViewById(R.id.set_server_ip);
         button.setOnClickListener(this);
+        button = (Button) findViewById(R.id.stop_server);
+        button.setOnClickListener(this);
         
         button = (Button) findViewById(R.id.set_rw);
         button.setOnClickListener(this);
@@ -65,7 +67,6 @@ public class MainActivity extends Activity implements OnClickListener {
             Intent intent = new Intent(this, FloatService.class);
             stopService(intent);
             startService(intent);
-            finish();
         } else if (v.getId() == R.id.start_touch) {
             startActivity(new Intent(this, TouchActivity.class));
             finish();
@@ -95,6 +96,9 @@ public class MainActivity extends Activity implements OnClickListener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else if (v.getId() == R.id.stop_server) {
+            Intent intent = new Intent(this, FloatService.class);
+            stopService(intent);
         }
     }
 

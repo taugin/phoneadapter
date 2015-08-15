@@ -99,8 +99,7 @@ public class FloatService extends Service {
         params.x = 0;
         params.y = 0;
 
-        DisplayMetrics dm = new DisplayMetrics();
-        dm = getResources().getDisplayMetrics();
+        DisplayMetrics dm = getResources().getDisplayMetrics();
         params.width = LayoutParams.WRAP_CONTENT;
         params.height = LayoutParams.WRAP_CONTENT;
         return params;

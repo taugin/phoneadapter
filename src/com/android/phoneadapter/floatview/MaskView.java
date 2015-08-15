@@ -55,6 +55,7 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         mPaint.setStyle(Style.STROKE);
         mPaint.setColor(Color.RED);
         mPaint.setAntiAlias(true);
+        mPaint.setTextSize(30f);
         mViewRect = new Rect();
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         mViewRect.left = 0;
@@ -89,12 +90,6 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         mDrawCircleAnimation = false;
         mHandler.removeCallbacks(mSweepRunnable);
         mHandler.postDelayed(mSweepRunnable, 1000);
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        // canvas.drawCircle(mPointerX, mPointerY, 5.0f, mPaint);
     }
 
     @Override
@@ -151,27 +146,38 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         mPaint.setStrokeWidth(strokeWidth);
     }
 
-    private void draw() {
-        Canvas canvas = getHolder().lockCanvas();
-        if (canvas == null) {
-            return ;
-        }
+    private void drawPointer(Canvas canvas) {
         canvas.drawColor(Color.TRANSPARENT,Mode.CLEAR);
         mPaint.setColorFilter(mPressed ? mColorMatrixColorFilter : null);
         canvas.drawBitmap(mBitmap, mPointerX, mPointerY, mPaint);
         if (mDrawCircleAnimation && false) {
             drawCircleAnimation(canvas);
         }
+    }
+
+    private void drawFPBS(Canvas canvas, long time) {
+        canvas.drawText("FPBS : " + time, 0, 65, mPaint);
+    }
+
+    private void draw() {
+        Canvas canvas = getHolder().lockCanvas();
+        if (canvas == null) {
+            return ;
+        }
+        long start = System.currentTimeMillis();
+        drawPointer(canvas);
+        long end = System.currentTimeMillis();
+        drawFPBS(canvas, (end - start));
         if (canvas != null) {
             getHolder().unlockCanvasAndPost(canvas);
         }
     }
-    
+
     public void run() {
         while(mRunning) {
             try {
                 draw();
-                Thread.sleep(10);
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
