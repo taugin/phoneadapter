@@ -35,6 +35,7 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
     private boolean mDrawCircleAnimation = false;
     private int sweepDegree = 0;
     private Handler mHandler;
+    private Rect mTextRect;
 
     private Rect mSweepRect;
     private int mSweepLength = 100;
@@ -74,6 +75,7 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
                 0, 0, 0, 1, 0   // Alpha
         });
         mColorMatrixColorFilter = new ColorMatrixColorFilter(cm);
+        mTextRect = new Rect();
     }
 
     public void updateTouchPosition(boolean pressed, int x, int y) {
@@ -147,7 +149,6 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
     }
 
     private void drawPointer(Canvas canvas) {
-        canvas.drawColor(Color.TRANSPARENT,Mode.CLEAR);
         mPaint.setColorFilter(mPressed ? mColorMatrixColorFilter : null);
         canvas.drawBitmap(mBitmap, mPointerX, mPointerY, mPaint);
         if (mDrawCircleAnimation && false) {
@@ -155,8 +156,19 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         }
     }
 
-    private void drawFPBS(Canvas canvas, long time) {
-        canvas.drawText("FPBS : " + time, 0, 65, mPaint);
+    private void drawPosition(Canvas canvas) {
+        /*
+        int color = mPaint.getColor();
+        mPaint.setColor(Color.WHITE);
+        canvas.drawRect(mTextRect, mPaint);
+        mPaint.setColor(color);
+        */
+        canvas.drawText("x : " + mPointerX + " | y : " + mPointerY + " | w : " + mViewRect.width() + " | h : " + mViewRect.height(), 0, 65, mPaint);
+    }
+
+    private void drawCrossLine(Canvas canvas) {
+        canvas.drawLine(0, mViewRect.height() / 2, mViewRect.width(), mViewRect.height() / 2, mPaint);
+        canvas.drawLine(mViewRect.width() / 2, 0, mViewRect.width() / 2, mViewRect.height(), mPaint);
     }
 
     private void draw() {
@@ -164,10 +176,10 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         if (canvas == null) {
             return ;
         }
-        long start = System.currentTimeMillis();
+        canvas.drawColor(Color.TRANSPARENT,Mode.CLEAR);
+        drawCrossLine(canvas);
         drawPointer(canvas);
-        long end = System.currentTimeMillis();
-        drawFPBS(canvas, (end - start));
+        drawPosition(canvas);
         if (canvas != null) {
             getHolder().unlockCanvasAndPost(canvas);
         }
