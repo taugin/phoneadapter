@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.PixelFormat;
@@ -17,7 +19,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
-import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.R;
 
@@ -37,6 +38,8 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
 
     private Rect mSweepRect;
     private int mSweepLength = 100;
+    private ColorMatrixColorFilter mColorMatrixColorFilter;
+    private boolean mPressed;
 
     public MaskView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
@@ -61,9 +64,19 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
 
         mPointerX = mViewRect.width() / 2;
         mPointerY = mViewRect.height() / 2;
+
+        ColorMatrix cm = new ColorMatrix();
+        cm.set(new float[]{
+                1, 0, 0, 0, 0,  // Red
+                0, 0, 0, 0, 0,  // Green
+                0, 0, 0, 0, 0,  // Blue
+                0, 0, 0, 1, 0   // Alpha
+        });
+        mColorMatrixColorFilter = new ColorMatrixColorFilter(cm);
     }
 
-    public void updateTouchPosition(int x, int y) {
+    public void updateTouchPosition(boolean pressed, int x, int y) {
+        mPressed = pressed;
         mPointerX = x;
         mPointerY = y;
         if (!mSweepRect.contains(mPointerX, mPointerY)) {
@@ -144,7 +157,8 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
             return ;
         }
         canvas.drawColor(Color.TRANSPARENT,Mode.CLEAR);
-        canvas.drawBitmap(mBitmap, mPointerX, mPointerY, null);
+        mPaint.setColorFilter(mPressed ? mColorMatrixColorFilter : null);
+        canvas.drawBitmap(mBitmap, mPointerX, mPointerY, mPaint);
         if (mDrawCircleAnimation && false) {
             drawCircleAnimation(canvas);
         }

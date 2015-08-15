@@ -14,7 +14,7 @@ public class EventSender {
     }
     public void sendEvent(String type, String code, String value) {
         sendevent(mFd, type, code, value);
-        Log.d(Log.TAG, type + " " + code + " " + value);
+        // Log.d(Log.TAG, type + " " + code + " " + value);
     }
     public void closeDevice() {
         Log.d(Log.TAG, "mFd : " + mFd);

@@ -3,7 +3,6 @@ package com.android.phoneadapter.event;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.view.KeyEvent;
 
 import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
@@ -103,12 +102,11 @@ public class EventHandler {
         if (mFloatService != null) {
             int realX = getPointerX(motion);
             int realY = getPointerY(motion);
-            mFloatService.updatePointerPosition(realX, realY);
+            mFloatService.updatePointerPosition(motion.pressed == 1, realX, realY);
         }
     }
 
     private int getPointerX(Motion motion) {
-        Log.d(Log.TAG, "motion.source : " + motion.source);
         if (mFloatService.getResources().getConfiguration().orientation == 2) {
             if (motion.source == 0) {
                 return motion.y;

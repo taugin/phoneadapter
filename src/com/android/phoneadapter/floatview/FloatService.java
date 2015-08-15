@@ -202,9 +202,9 @@ public class FloatService extends Service {
         }
     }
 
-    public void updatePointerPosition(int x, int y) {
+    public void updatePointerPosition(boolean pressed, int x, int y) {
         if (mMaskView != null) {
-            mMaskView.updateTouchPosition(x, y);
+            mMaskView.updateTouchPosition(pressed, x, y);
         }
     }
 }
