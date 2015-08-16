@@ -15,6 +15,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.util.DisplayMetrics;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
@@ -85,6 +86,10 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         if (!mSweepRect.contains(mPointerX, mPointerY)) {
             startSweepAnimation();
         }
+    }
+    
+    public void addPointerEvent(MotionEvent event) {
+        
     }
 
     private void startSweepAnimation() {
