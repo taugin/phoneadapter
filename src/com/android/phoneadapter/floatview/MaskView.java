@@ -37,11 +37,13 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
     private int sweepDegree = 0;
     private Handler mHandler;
     private Rect mTextRect;
+    private Rect mClientRect;
 
     private Rect mSweepRect;
     private int mSweepLength = 100;
     private ColorMatrixColorFilter mColorMatrixColorFilter;
     private boolean mPressed;
+    private int mTextPadding;
 
     public MaskView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
@@ -77,6 +79,8 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         });
         mColorMatrixColorFilter = new ColorMatrixColorFilter(cm);
         mTextRect = new Rect();
+        mClientRect = new Rect();
+        mTextPadding = dp2px(context, 4);
     }
 
     public void updateTouchPosition(boolean pressed, int x, int y) {
@@ -110,6 +114,7 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
     public void surfaceChanged(SurfaceHolder holder, int format, int width,
             int height) {
         Log.d(Log.TAG, "holder : " + holder);
+        getWindowVisibleDisplayFrame(mClientRect);
     }
 
     @Override
@@ -156,19 +161,24 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
     private void drawPointer(Canvas canvas) {
         mPaint.setColorFilter(mPressed ? mColorMatrixColorFilter : null);
         canvas.drawBitmap(mBitmap, mPointerX, mPointerY, mPaint);
+        mPaint.setColorFilter(null);
         if (mDrawCircleAnimation && false) {
             drawCircleAnimation(canvas);
         }
     }
 
     private void drawPosition(Canvas canvas) {
-        /*
+        int statusBarHeight = mClientRect.top;
+        int textSize = (int) mPaint.getTextSize();
+        String text = "x : " + mPointerX + " | y : " + mPointerY + " | w : " + mViewRect.width() + " | h : " + mViewRect.height();
+        mPaint.getTextBounds(text, 0, text.length(), mTextRect);
+        mTextRect.top = statusBarHeight;
+        mTextRect.bottom = statusBarHeight + textSize + mTextPadding;
         int color = mPaint.getColor();
         mPaint.setColor(Color.WHITE);
         canvas.drawRect(mTextRect, mPaint);
         mPaint.setColor(color);
-        */
-        canvas.drawText("x : " + mPointerX + " | y : " + mPointerY + " | w : " + mViewRect.width() + " | h : " + mViewRect.height(), 0, 65, mPaint);
+        canvas.drawText(text, 0, statusBarHeight + textSize, mPaint);
     }
 
     private void drawCrossLine(Canvas canvas) {
@@ -211,4 +221,15 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
             mSweepRect.bottom =  mPointerY + mSweepLength;
         }
     };
+
+    public int dp2px(Context context, float dp) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dp * scale + 0.5f);
+    }
+
+    public int px2dp(Context context, float px) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        Log.d(Log.TAG, "scale = " + scale);
+        return (int) (px / scale + 0.5f);
+    }
 }
