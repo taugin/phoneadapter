@@ -194,7 +194,7 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         while(mRunning) {
             try {
                 draw();
-                Thread.sleep(50);
+                Thread.sleep(30);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

@@ -6,7 +6,6 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
@@ -16,6 +15,7 @@ import com.android.phoneadapter.floatview.FloatService;
 
 
 public class EventHandler {
+    private static boolean useInject = false;
     public static int TRACKID = 1;
 
     public static final String EV_TOUCH_DEVICE = "/dev/input/event0";
@@ -199,43 +199,29 @@ public class EventHandler {
         if (motion != null) {
             if (motion.type == 0) {
                 updatePointer(motion);
-                handleTouchMotion(motion);
-                // handleTouchMotionViaInject(motion);
+                if (useInject) {
+                    handleTouchMotionViaInject(motion);
+                } else {
+                    handleTouchMotion(motion);
+                }
             } else if (motion.type == 1) {
-                handleKeyMotion(motion);
-                // handleKeyMotionViaInject2();
+                if (useInject) {
+                    handleKeyMotionViaInject2(motion);
+                } else {
+                    handleKeyMotion(motion);
+                }
             }
         }
     }
 
-    private void handleKeyMotionViaInject() {
-        long downTime = SystemClock.uptimeMillis();
-        long eventTime = SystemClock.uptimeMillis();
-        KeyEvent eventd = new KeyEvent(downTime, eventTime,
-                KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK, 0, 0, 0, 158,
-                KeyEvent.FLAG_FROM_SYSTEM, InputDevice.SOURCE_KEYBOARD);
-        EventInject.sendKeySync(eventd);
-
-        KeyEvent eventu = new KeyEvent(downTime, eventTime, KeyEvent.ACTION_UP,
-                KeyEvent.KEYCODE_BACK, 0, 0, 0, 158, KeyEvent.FLAG_FROM_SYSTEM,
-                InputDevice.SOURCE_KEYBOARD);
-        EventInject.sendKeySync(eventu);
+    private void handleKeyMotionViaInject2(Motion motion) {
+        if (motion.key == 0) {
+            EventInject.injectKeyDownUp(KeyEvent.KEYCODE_BACK);
+        } else if (motion.key == 1) {
+            EventInject.injectKeyDownUp(KeyEvent.KEYCODE_MENU);
+        }
     }
 
-    private void handleKeyMotionViaInject2() {
-        long downTime = SystemClock.uptimeMillis();
-        long eventTime = SystemClock.uptimeMillis();
-        KeyEvent eventd = new KeyEvent(downTime, eventTime,
-                KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK, 0, 0, 0, 158,
-                KeyEvent.FLAG_FROM_SYSTEM, InputDevice.SOURCE_KEYBOARD);
-        InputManager.getInstance().injectInputEvent(eventd, InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
-
-        KeyEvent eventu = new KeyEvent(downTime, eventTime, KeyEvent.ACTION_UP,
-                KeyEvent.KEYCODE_BACK, 0, 0, 0, 158, KeyEvent.FLAG_FROM_SYSTEM,
-                InputDevice.SOURCE_KEYBOARD);
-        InputManager.getInstance().injectInputEvent(eventu, InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
-    }
-    
     @SuppressLint("Recycle")
     private void handleTouchMotionViaInject(Motion motion) {
         int realX = getTouchX(motion);
@@ -244,27 +230,21 @@ public class EventHandler {
         int action = 0;
         long downTime = SystemClock.uptimeMillis();
         long eventTime = SystemClock.uptimeMillis();
-        MotionEvent.PointerCoords c1 = new MotionEvent.PointerCoords();
-        c1.x = realX;
-        c1.y = realX;
-        c1.pressure = 0.5f;// 0-1
-        c1.size = 0.9f;
         if (motion.action == 1) {
             action = MotionEvent.ACTION_DOWN;
             event = MotionEvent.obtain(downTime, eventTime, action, realX, realY, 0);
             Log.d(Log.TAG, "event : " + event);
-            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
+            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
         } else if (motion.action == 2 && motion.pressed == 1) {
             action = MotionEvent.ACTION_MOVE;
             event = MotionEvent.obtain(downTime, eventTime, action, realX, realY, 0);
             Log.d(Log.TAG, "event : " + event);
-            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
+            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
         } else if (motion.action == 0) {
             action = MotionEvent.ACTION_UP;
             event = MotionEvent.obtain(downTime, eventTime, action, realX, realY, 0);
             Log.d(Log.TAG, "event : " + event);
-            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
+            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
         }
-        // event = MotionEvent.obtain(downTime, eventTime, action, realX, realY, 0.5f, 0.5f, 0, 1f, 1f, 0, 1);
     }
 }
