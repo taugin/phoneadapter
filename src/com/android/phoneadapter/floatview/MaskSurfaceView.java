@@ -9,23 +9,28 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
-import android.view.View;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.WindowManager;
 
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.R;
 
-public class MaskView extends View {
+public class MaskSurfaceView extends SurfaceView implements SurfaceHolder.Callback,
+        Runnable {
 
     private Paint mPaint;
     private Rect mViewRect;
     private int mPointerX;
     private int mPointerY;
+    private boolean mRunning = false;
     private Bitmap mBitmap;
     private RectF mOutRectF;
     private boolean mDrawCircleAnimation = false;
@@ -41,9 +46,11 @@ public class MaskView extends View {
     private int mTextPadding;
     private float mRefreshFrenquency;
 
-    public MaskView(Context context, WindowManager manager,
+    public MaskSurfaceView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
         super(context);
+        getHolder().addCallback(this);
+        getHolder().setFormat(PixelFormat.TRANSPARENT);
         mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.cursor);
         mOutRectF = new RectF();
         mHandler = new Handler();
@@ -86,10 +93,10 @@ public class MaskView extends View {
         if (!mSweepRect.contains(mPointerX, mPointerY)) {
             startSweepAnimation();
         }
-        postInvalidate();
     }
     
     public void addPointerEvent(MotionEvent event) {
+        
     }
 
     private void startSweepAnimation() {
@@ -100,17 +107,23 @@ public class MaskView extends View {
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        Log.d(Log.TAG, "w : " + w  +" , h : " + h);
+    public void surfaceCreated(SurfaceHolder holder) {
+        Log.d(Log.TAG, "holder : " + holder);
+        mRunning = true;
+        new Thread(this).start();
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width,
+            int height) {
+        Log.d(Log.TAG, "holder : " + holder);
         getWindowVisibleDisplayFrame(mClientRect);
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
-        drawCrossLine(canvas);
-        drawPointer(canvas);
-        drawPosition(canvas);
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.d(Log.TAG, "holder : " + holder);
+        mRunning = false;
     }
 
     private void setOutRect() {
@@ -175,6 +188,33 @@ public class MaskView extends View {
     private void drawCrossLine(Canvas canvas) {
         canvas.drawLine(0, mViewRect.height() / 2, mViewRect.width(), mViewRect.height() / 2, mPaint);
         canvas.drawLine(mViewRect.width() / 2, 0, mViewRect.width() / 2, mViewRect.height(), mPaint);
+    }
+
+    private void draw() {
+        Canvas canvas = getHolder().lockCanvas();
+        if (canvas == null) {
+            return ;
+        }
+        canvas.drawColor(Color.TRANSPARENT,Mode.CLEAR);
+        drawCrossLine(canvas);
+        drawPointer(canvas);
+        drawPosition(canvas);
+        if (canvas != null) {
+            getHolder().unlockCanvasAndPost(canvas);
+        }
+    }
+
+    public void run() {
+        int sleepTime = 50;
+        sleepTime = Math.round(1000 / mRefreshFrenquency);
+        while(mRunning) {
+            try {
+                draw();
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private Runnable mSweepRunnable = new Runnable() {

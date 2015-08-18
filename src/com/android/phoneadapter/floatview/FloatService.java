@@ -149,9 +149,9 @@ public class FloatService extends Service {
         WindowManager.LayoutParams params = new WindowManager.LayoutParams();
         params.type = LayoutParams.TYPE_SYSTEM_ERROR; // Can be drag to
                                                              // statusbar
-        params.format = PixelFormat.RGBA_8888;
-        // params.alpha = 1.0f;
-        params.alpha = 0f;
+        // params.format = PixelFormat.RGBA_8888;
+        params.format = PixelFormat.TRANSPARENT;
+        params.alpha = 1.0f;
 
         params.flags = LayoutParams.FLAG_FULLSCREEN
                 | LayoutParams.FLAG_NOT_FOCUSABLE
