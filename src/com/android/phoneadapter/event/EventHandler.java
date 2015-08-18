@@ -71,8 +71,8 @@ public class EventHandler {
 
     
     public boolean openTouchDevice() {
-        String touchDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("touch_device", null);
-        String keyDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("key_device", null);
+        String touchDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("touch_device", EV_TOUCH_DEVICE);
+        String keyDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("key_device", EV_TOUCH_DEVICE);
         if (TextUtils.isEmpty(touchDevice) || TextUtils.isEmpty(keyDevice)) {
             return false;
         }
@@ -90,8 +90,11 @@ public class EventHandler {
     }
 
     public void closeTouchDevice() {
-        String touchDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("touch_device", null);
-        String keyDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("key_device", null);
+        String touchDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("touch_device", EV_TOUCH_DEVICE);
+        String keyDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("key_device", EV_TOUCH_DEVICE);
+        if (TextUtils.isEmpty(touchDevice) || TextUtils.isEmpty(keyDevice)) {
+            return;
+        }
         if (touchDevice.equalsIgnoreCase(keyDevice)) {
             mTouchSender.closeDevice();
             mTouchSender = null;

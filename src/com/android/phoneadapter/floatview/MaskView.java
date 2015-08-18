@@ -44,6 +44,7 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
     private ColorMatrixColorFilter mColorMatrixColorFilter;
     private boolean mPressed;
     private int mTextPadding;
+    private float mRefreshFrenquency;
 
     public MaskView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
@@ -69,6 +70,8 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
 
         mPointerX = mViewRect.width() / 2;
         mPointerY = mViewRect.height() / 2;
+        mRefreshFrenquency = manager.getDefaultDisplay().getRefreshRate();
+        Log.d(Log.TAG, "mRefreshFrenquency : " + mRefreshFrenquency);
 
         ColorMatrix cm = new ColorMatrix();
         cm.set(new float[]{
@@ -171,6 +174,7 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
         int statusBarHeight = mClientRect.top;
         int textSize = (int) mPaint.getTextSize();
         String text = "x : " + mPointerX + " | y : " + mPointerY + " | w : " + mViewRect.width() + " | h : " + mViewRect.height();
+        // Log.d(Log.TAG, "mTextRect left : " + mTextRect.left + " , top : " + mTextRect.top + " ,  statusBarHeight : " + statusBarHeight + " , textSize : " + textSize);
         mPaint.getTextBounds(text, 0, text.length(), mTextRect);
         mTextRect.top = statusBarHeight;
         mTextRect.bottom = statusBarHeight + textSize + mTextPadding;
@@ -201,10 +205,12 @@ public class MaskView extends SurfaceView implements SurfaceHolder.Callback,
     }
 
     public void run() {
+        int sleepTime = 50;
+        sleepTime = Math.round(1000 / mRefreshFrenquency);
         while(mRunning) {
             try {
                 draw();
-                Thread.sleep(30);
+                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
