@@ -175,11 +175,18 @@ public class MaskView extends View {
         mPath.lineTo(x + 5, y + 9);
         mPath.lineTo(x + 9, y + 9);
         mPath.lineTo(x, y);
-        mPaint.setColor(mPressed ? Color.RED : Color.WHITE);
-        mPaint.setStyle(Style.FILL_AND_STROKE);
+        mPaint.setColor(Color.parseColor("#66666666"));
+        mPaint.setStyle(Style.STROKE);
+        float w =  mPaint.getStrokeWidth();
+        mPaint.setStrokeWidth(2);
+        canvas.save();
+        canvas.clipPath(mPath);
+        canvas.drawColor(mPressed ? Color.RED : Color.WHITE);
         canvas.drawPath(mPath, mPaint);
+        canvas.restore();
         mPaint.setColor(Color.RED);
         mPaint.setStyle(Style.STROKE);
+        mPaint.setStrokeWidth(w);
     }
 
     private void drawPosition(Canvas canvas) {
