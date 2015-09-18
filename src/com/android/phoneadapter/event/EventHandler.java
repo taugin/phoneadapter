@@ -225,7 +225,6 @@ public class EventHandler {
         }
     }
 
-    @SuppressLint("Recycle")
     private void handleTouchMotionViaInject(Motion motion) {
         int realX = getTouchX(motion);
         int realY = getTouchY(motion);
@@ -248,6 +247,9 @@ public class EventHandler {
             event = MotionEvent.obtain(downTime, eventTime, action, realX, realY, 0);
             Log.d(Log.TAG, "event : " + event);
             InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
+        }
+        if (event != null) {
+            event.recycle();
         }
     }
 }

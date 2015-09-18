@@ -9,6 +9,7 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
@@ -40,6 +41,7 @@ public class MaskView extends View {
     private boolean mPressed;
     private int mTextPadding;
     private float mRefreshFrenquency;
+    private Path mPath;
 
     public MaskView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
@@ -48,6 +50,7 @@ public class MaskView extends View {
         mOutRectF = new RectF();
         mHandler = new Handler();
         mSweepRect = new Rect();
+        mPath = new Path();
 
         mPaint = new Paint();
         mPaint.setStyle(Style.STROKE);
@@ -149,12 +152,34 @@ public class MaskView extends View {
     }
 
     private void drawPointer(Canvas canvas) {
+        /*
         mPaint.setColorFilter(mPressed ? mColorMatrixColorFilter : null);
         canvas.drawBitmap(mBitmap, mPointerX, mPointerY, mPaint);
         mPaint.setColorFilter(null);
+        */
         if (mDrawCircleAnimation && false) {
             drawCircleAnimation(canvas);
         }
+        drawPointerView(canvas);
+    }
+
+    private void drawPointerView(Canvas canvas) {
+        mPath.reset();
+        final int x = mPointerX;
+        final int y = mPointerY;
+        mPath.moveTo(x, y);
+        mPath.lineTo(x, y + 13);
+        mPath.lineTo(x + 3, y + 10);
+        mPath.lineTo(x + 6, y + 16);
+        mPath.lineTo(x + 7, y + 14);
+        mPath.lineTo(x + 5, y + 9);
+        mPath.lineTo(x + 9, y + 9);
+        mPath.lineTo(x, y);
+        mPaint.setColor(mPressed ? Color.RED : Color.WHITE);
+        mPaint.setStyle(Style.FILL_AND_STROKE);
+        canvas.drawPath(mPath, mPaint);
+        mPaint.setColor(Color.RED);
+        mPaint.setStyle(Style.STROKE);
     }
 
     private void drawPosition(Canvas canvas) {
