@@ -11,4 +11,6 @@ public class Motion {
     public int y;
     public int key;
     public int state;
+    public int dx;
+    public int dy;
 }

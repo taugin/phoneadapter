@@ -30,6 +30,7 @@ public class MainActivity extends Activity implements OnClickListener {
     private EditText mServerIP;
     private EditText mTouchDeviceNode;
     private EditText mKeyDeviceNode;
+    private EditText mMouseDeviceNode;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +40,7 @@ public class MainActivity extends Activity implements OnClickListener {
         mClientIp = (TextView) findViewById(R.id.client_ip);
         mTouchDeviceNode = (EditText) findViewById(R.id.touch_device_node);
         mKeyDeviceNode = (EditText) findViewById(R.id.key_device_node);
+        mMouseDeviceNode = (EditText) findViewById(R.id.key_mouse_node);
         button = (Button) findViewById(R.id.start_server);
         button.setOnClickListener(this);
         button = (Button) findViewById(R.id.start_touch);
@@ -50,7 +52,7 @@ public class MainActivity extends Activity implements OnClickListener {
         
         button = (Button) findViewById(R.id.set_rw);
         button.setOnClickListener(this);
-        
+
         mClientIp.setText(getLocalHostIp());
         String serverIp = PreferenceManager.getDefaultSharedPreferences(this).getString("server_ip", null);
         mServerIP.setText(serverIp);
@@ -59,6 +61,8 @@ public class MainActivity extends Activity implements OnClickListener {
         mTouchDeviceNode.setText(touchDevice);
         String keyDevice = PreferenceManager.getDefaultSharedPreferences(this).getString("key_device", "/dev/input/event0");
         mKeyDeviceNode.setText(keyDevice);
+        String mouseDevice = PreferenceManager.getDefaultSharedPreferences(this).getString("mouse_device", "/dev/input/event0");
+        mMouseDeviceNode.setText(mouseDevice);
     }
 
     @Override
@@ -68,7 +72,7 @@ public class MainActivity extends Activity implements OnClickListener {
             stopService(intent);
             startService(intent);
         } else if (v.getId() == R.id.start_touch) {
-            startActivity(new Intent(this, TouchActivity.class));
+            startActivity(new Intent(this, TouchActivity2.class));
             finish();
         } else if (v.getId() == R.id.set_server_ip) {
             String ip = mServerIP.getText().toString();
@@ -79,17 +83,22 @@ public class MainActivity extends Activity implements OnClickListener {
         } else if (v.getId() == R.id.set_rw) {
             String touchDeviceNode = mTouchDeviceNode.getText().toString();
             String keyDeviceNode = mKeyDeviceNode.getText().toString();
+            String mouseDeviceNode = mMouseDeviceNode.getText().toString();
             PreferenceManager.getDefaultSharedPreferences(this).edit().putString("touch_device", touchDeviceNode).commit();
             PreferenceManager.getDefaultSharedPreferences(this).edit().putString("key_device", keyDeviceNode).commit();
+            PreferenceManager.getDefaultSharedPreferences(this).edit().putString("mouse_device", mouseDeviceNode).commit();
             try {
                 Process p = Runtime.getRuntime().exec("su");
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
                 String cmd1 = "chmod 666 " + touchDeviceNode + "\n";
                 String cmd2 = "chmod 666 " + keyDeviceNode + "\n";
+                String cmd3 = "chmod 666 " + mouseDeviceNode + "\n";
                 Log.d(Log.TAG, "cmd1 : " + cmd1);
                 Log.d(Log.TAG, "cmd2 : " + cmd2);
+                Log.d(Log.TAG, "cmd3 : " + cmd3);
                 bw.write(cmd1);
                 bw.write(cmd2);
+                bw.write(cmd3);
                 bw.write("exit\n");
                 bw.flush();
                 bw.close();

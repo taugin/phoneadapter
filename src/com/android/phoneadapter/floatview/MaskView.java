@@ -42,11 +42,13 @@ public class MaskView extends View {
     private int mTextPadding;
     private float mRefreshFrenquency;
     private Path mPath;
+    private int mCursorHeight; 
 
     public MaskView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
         super(context);
         mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.cursor);
+        mCursorHeight = mBitmap.getHeight();
         mOutRectF = new RectF();
         mHandler = new Handler();
         mSweepRect = new Rect();
@@ -58,14 +60,7 @@ public class MaskView extends View {
         mPaint.setAntiAlias(true);
         mPaint.setTextSize(30f);
         mViewRect = new Rect();
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        mViewRect.left = 0;
-        mViewRect.top = 0;
-        mViewRect.right = displayMetrics.widthPixels;
-        mViewRect.bottom = displayMetrics.heightPixels;
 
-        mPointerX = mViewRect.width() / 2;
-        mPointerY = mViewRect.height() / 2;
         mRefreshFrenquency = manager.getDefaultDisplay().getRefreshRate();
         Log.d(Log.TAG, "mRefreshFrenquency : " + mRefreshFrenquency);
 
@@ -86,12 +81,31 @@ public class MaskView extends View {
         mPressed = pressed;
         mPointerX = x;
         mPointerY = y;
+        if (mPointerX > mViewRect.right) {
+            mPointerX = mViewRect.right;
+        }
+        if (mPointerX < 0) {
+            mPointerX = 0;
+        }
+        if (mPointerY > mViewRect.bottom - mCursorHeight) {
+            mPointerY = mViewRect.bottom - mCursorHeight;
+        }
+        if (mPointerY < 0) {
+            mPointerY = 0;
+        }
         if (!mSweepRect.contains(mPointerX, mPointerY)) {
             startSweepAnimation();
         }
         postInvalidate();
     }
-    
+
+    public void getPosition(int []pos) {
+        if (pos != null) {
+            pos[0] = mPointerX;
+            pos[1] = mPointerY;
+        }
+    }
+
     public void addPointerEvent(MotionEvent event) {
     }
 
@@ -107,13 +121,20 @@ public class MaskView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         Log.d(Log.TAG, "w : " + w  +" , h : " + h);
         getWindowVisibleDisplayFrame(mClientRect);
+        mViewRect.left = 0;
+        mViewRect.top = 0;
+        mViewRect.right = w;
+        mViewRect.bottom = h;
+        mPointerX = mViewRect.width() / 2;
+        mPointerY = mViewRect.height() / 2;
+        Log.d(Log.TAG, "mViewRect : " + mViewRect);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        drawCrossLine(canvas);
+        // drawCrossLine(canvas);
         drawPointer(canvas);
-        drawPosition(canvas);
+        // drawPosition(canvas);
     }
 
     private void setOutRect() {

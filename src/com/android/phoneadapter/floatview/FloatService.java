@@ -11,6 +11,7 @@ import android.graphics.PixelFormat;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
+import android.view.View;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 
@@ -27,7 +28,7 @@ public class FloatService extends Service {
     private WindowManager mWindowManager = null;
 
     private EventSocket mEventSocket;
-    private MaskView mMaskView;
+    private View mMaskView;
     private EventHandler mEventHandler;
 
     @Override
@@ -132,9 +133,9 @@ public class FloatService extends Service {
         return floatView;
     }
 
-    private MaskView createMaskView() {
+    private View createMaskView() {
         Log.d(Log.TAG, "");
-        MaskView maskView = null;
+        View maskView = null;
         WindowManager.LayoutParams params = getMaskLayoutParams();
         maskView = new MaskView(getApplicationContext(), mWindowManager,
                 params);
@@ -156,7 +157,7 @@ public class FloatService extends Service {
         params.flags = LayoutParams.FLAG_FULLSCREEN
                 | LayoutParams.FLAG_NOT_FOCUSABLE
                 | LayoutParams.FLAG_NOT_TOUCHABLE
-                | LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+                | LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 
         /**
          * type = LayoutParams.TYPE_SYSTEM_ERROR and flags =
@@ -172,8 +173,8 @@ public class FloatService extends Service {
 
         DisplayMetrics dm = new DisplayMetrics();
         dm = getResources().getDisplayMetrics();
-        params.width = dm.widthPixels;
-        params.height = dm.heightPixels;
+        params.width = dm.widthPixels + 48;
+        params.height = dm.heightPixels + 48;
         return params;
     }
 
@@ -202,8 +203,14 @@ public class FloatService extends Service {
     }
 
     public void updatePointerPosition(boolean pressed, int x, int y) {
-        if (mMaskView != null) {
-            mMaskView.updateTouchPosition(pressed, x, y);
+        if (mMaskView instanceof MaskView) {
+            ((MaskView)mMaskView).updateTouchPosition(pressed, x, y);
+        }
+    }
+
+    public void getPosition(int []pos) {
+        if (mMaskView instanceof MaskView) {
+            ((MaskView)mMaskView).getPosition(pos);
         }
     }
 }
