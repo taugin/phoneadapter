@@ -20,22 +20,19 @@ import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
-import android.view.GestureDetector;
-import android.view.GestureDetector.OnGestureListener;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.FrameLayout;
 
-public class TouchActivity2 extends Activity implements OnClickListener, OnGestureListener {
+public class TouchActivity2 extends Activity implements OnClickListener {
 
     private WorkHandler mWorkHandler;
     private static int TID = 5000;
 
     private DatagramSocket mDatagramSocket;
     private TouchEvent mTouchEvent;
-    private GestureDetector mGestureDetector;
     private int mLastX;
     private int mLastY;
 
@@ -43,7 +40,6 @@ public class TouchActivity2 extends Activity implements OnClickListener, OnGestu
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.touch_layout2);
-        mGestureDetector = new GestureDetector(this, this);
         FrameLayout frameLayout = (FrameLayout) findViewById(R.id.touch_layout);
         TouchView touchView = new TouchView(this);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -1);
@@ -180,45 +176,5 @@ public class TouchActivity2 extends Activity implements OnClickListener, OnGestu
             Log.d(Log.TAG, "sendData : " + sendData);
             mWorkHandler.sendMessage(message);
         }
-    }
-
-    @Override
-    public boolean onDown(MotionEvent e) {
-        mLastX = (int) e.getX();
-        mLastY = (int) e.getY();
-        return true;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent e) {
-        mTouchEvent.sendEvent(0, 0, 1, 2, 0, 0, 0, 0);
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
-            float distanceY) {
-        int x = (int) e2.getX();
-        int y = (int) e2.getY();
-        int dx = x - mLastX;
-        int dy = y - mLastY;
-        mLastX = x;
-        mLastY = y;
-        mTouchEvent.sendEvent(0, e2.getPointerId(0), 1, 2, dx, dy, 0, 0);
-        return true;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent e) {
-    }
-
-    @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
-            float velocityY) {
-        return false;
     }
 }
