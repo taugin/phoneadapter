@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import com.android.phoneadapter.EventSender;
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.floatview.FloatService;
+import com.android.phoneadapter.utils.Utils;
 
 
 public class EventHandler {
@@ -54,19 +55,18 @@ public class EventHandler {
     private int mHeight = 0;
     private EventSender mTouchSender;
     private EventSender mKeySender;
+    private int[] mPos = new int[2];
 
     public EventHandler(FloatService service) {
         Log.d(Log.TAG, "");
         mFloatService = service;
-        DisplayMetrics dm = service.getResources().getDisplayMetrics();
-        mWidth = dm.widthPixels;
-        mHeight = dm.heightPixels;
+        mWidth = Utils.getDisplayWidth(mFloatService);
+        mHeight = Utils.getDisplayHeight(mFloatService);
     }
 
     public void updateScreen() {
-        DisplayMetrics dm = mFloatService.getResources().getDisplayMetrics();
-        mWidth = dm.widthPixels;
-        mHeight = dm.heightPixels;
+        mWidth = Utils.getDisplayWidth(mFloatService);
+        mHeight = Utils.getDisplayHeight(mFloatService);
     }
 
     
@@ -152,8 +152,10 @@ public class EventHandler {
     }
 
     private void handleTouchMotion(Motion motion) {
-        int realX = getTouchX(motion);
-        int realY = getTouchY(motion);
+        mFloatService.getPosition(mPos);
+        Log.d(Log.TAG, "motion : " + motion.action);
+        int realX = mPos[0];
+        int realY = mPos[1];
         if (motion.action == 1) {
             // For huawei
             mTouchSender.sendEvent(EV_KEY, BTN_TOUCH, String.valueOf(1));

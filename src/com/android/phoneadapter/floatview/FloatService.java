@@ -21,6 +21,7 @@ import com.android.phoneadapter.event.EventHandler;
 import com.android.phoneadapter.floatview.PointerView.OnLongPressListener;
 import com.android.phoneadapter.floatview.PointerView.OnPressListener;
 import com.android.phoneadapter.socket.EventSocket;
+import com.android.phoneadapter.utils.Utils;
 
 public class FloatService extends Service {
     private static final String TAG = "FloatService";
@@ -100,7 +101,6 @@ public class FloatService extends Service {
         params.x = 0;
         params.y = 0;
 
-        DisplayMetrics dm = getResources().getDisplayMetrics();
         params.width = LayoutParams.WRAP_CONTENT;
         params.height = LayoutParams.WRAP_CONTENT;
         return params;
@@ -171,10 +171,8 @@ public class FloatService extends Service {
         params.x = 0;
         params.y = 0;
 
-        DisplayMetrics dm = new DisplayMetrics();
-        dm = getResources().getDisplayMetrics();
-        params.width = dm.widthPixels + 48;
-        params.height = dm.heightPixels + 48;
+        params.width = Utils.getDisplayWidth(this);
+        params.height = Utils.getDisplayHeight(this);
         return params;
     }
 
@@ -186,12 +184,11 @@ public class FloatService extends Service {
         createFloatView();
         Log.d(Log.TAG, "newConfig : " + newConfig.orientation + " , mEventSocket : " + mEventSocket);
         if (mEventSocket != null) {
-            DisplayMetrics metrics = getResources().getDisplayMetrics();
             JSONObject object = new JSONObject();
             try {
                 object.put("cmd", "response_screensize");
-                object.put("w", metrics.widthPixels);
-                object.put("h", metrics.heightPixels);
+                object.put("w", Utils.getDisplayWidth(this));
+                object.put("h", Utils.getDisplayHeight(this));
             } catch (JSONException e) {
                 Log.d(Log.TAG, "error : " + e);
             }

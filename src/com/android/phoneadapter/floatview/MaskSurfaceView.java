@@ -22,6 +22,7 @@ import android.view.WindowManager;
 
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.R;
+import com.android.phoneadapter.utils.Utils;
 
 public class MaskSurfaceView extends SurfaceView implements SurfaceHolder.Callback,
         Runnable {
@@ -62,11 +63,10 @@ public class MaskSurfaceView extends SurfaceView implements SurfaceHolder.Callba
         mPaint.setAntiAlias(true);
         mPaint.setTextSize(30f);
         mViewRect = new Rect();
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         mViewRect.left = 0;
         mViewRect.top = 0;
-        mViewRect.right = displayMetrics.widthPixels;
-        mViewRect.bottom = displayMetrics.heightPixels;
+        mViewRect.right = Utils.getDisplayWidth(context);
+        mViewRect.bottom = Utils.getDisplayHeight(context);
 
         mPointerX = mViewRect.width() / 2;
         mPointerY = mViewRect.height() / 2;

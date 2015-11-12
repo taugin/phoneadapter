@@ -23,11 +23,11 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
-import android.util.DisplayMetrics;
 
 import com.android.phoneadapter.Log;
 import com.android.phoneadapter.event.EventHandler;
 import com.android.phoneadapter.event.Motion;
+import com.android.phoneadapter.utils.Utils;
 import com.google.gson.Gson;
 
 public class EventSocket {
@@ -82,12 +82,11 @@ public class EventSocket {
         Packet packet = mGson.fromJson(data, Packet.class);
         if (packet != null) {
             if (Packet.REQUEST_SCREENSIZE.equals(packet.cmd)) {
-                DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
                 JSONObject object = new JSONObject();
                 try {
                     object.put("cmd", "response_screensize");
-                    object.put("w", metrics.widthPixels);
-                    object.put("h", metrics.heightPixels);
+                    object.put("w", Utils.getDisplayWidth(mContext));
+                    object.put("h", Utils.getDisplayHeight(mContext));
                 } catch (JSONException e) {
                     Log.d(Log.TAG, "error : " + e);
                 }

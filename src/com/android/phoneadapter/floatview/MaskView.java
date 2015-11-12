@@ -13,7 +13,6 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
-import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -49,6 +48,7 @@ public class MaskView extends View {
         super(context);
         mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.cursor);
         mCursorHeight = mBitmap.getHeight();
+        setBackgroundColor(Color.parseColor("#88FFFF00"));
         mOutRectF = new RectF();
         mHandler = new Handler();
         mSweepRect = new Rect();
