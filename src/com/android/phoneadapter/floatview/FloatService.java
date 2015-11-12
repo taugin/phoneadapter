@@ -210,4 +210,10 @@ public class FloatService extends Service {
             ((MaskView)mMaskView).getPosition(pos);
         }
     }
+
+    public void setShowMsg(String msg) {
+        if (mMaskView instanceof MaskView) {
+            ((MaskView)mMaskView).setShowMsg(msg);
+        }
+    }
 }

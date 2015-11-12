@@ -13,6 +13,7 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -41,14 +42,16 @@ public class MaskView extends View {
     private int mTextPadding;
     private float mRefreshFrenquency;
     private Path mPath;
-    private int mCursorHeight; 
+    private int mCursorHeight;
+    private int mPacketHandled = 0;
+    private String mShowMsg;
 
     public MaskView(Context context, WindowManager manager,
             WindowManager.LayoutParams params) {
         super(context);
         mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.cursor);
         mCursorHeight = mBitmap.getHeight();
-        setBackgroundColor(Color.parseColor("#88FFFF00"));
+        // setBackgroundColor(Color.parseColor("#88FFFF00"));
         mOutRectF = new RectF();
         mHandler = new Handler();
         mSweepRect = new Rect();
@@ -78,6 +81,7 @@ public class MaskView extends View {
     }
 
     public void updateTouchPosition(boolean pressed, int x, int y) {
+        mPacketHandled++;
         mPressed = pressed;
         mPointerX = x;
         mPointerY = y;
@@ -97,6 +101,10 @@ public class MaskView extends View {
             startSweepAnimation();
         }
         postInvalidate();
+    }
+
+    public void setShowMsg(String msg) {
+        mShowMsg = msg;
     }
 
     public void getPosition(int []pos) {
@@ -133,6 +141,7 @@ public class MaskView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         // drawCrossLine(canvas);
+        drawHandledPacket(canvas);
         drawPointer(canvas);
         // drawPosition(canvas);
     }
@@ -208,6 +217,13 @@ public class MaskView extends View {
         mPaint.setColor(Color.RED);
         mPaint.setStyle(Style.STROKE);
         mPaint.setStrokeWidth(w);
+    }
+
+    private void drawHandledPacket(Canvas canvas) {
+        canvas.drawText("HandledPacket : " + mPacketHandled, 10, mViewRect.height() / 2, mPaint);
+        if (!TextUtils.isEmpty(mShowMsg)) {
+            canvas.drawText(mShowMsg, 10, mViewRect.height() / 2 + 30, mPaint);
+        }
     }
 
     private void drawPosition(Canvas canvas) {

@@ -2,50 +2,123 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFFFF"
     android:orientation="horizontal" >
 
     <FrameLayout
         android:id="@+id/touch_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/touch_background"
-        android:layout_weight="1" >
+        android:layout_weight="1"
+        android:background="@drawable/touch_background" >
     </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="2"
-        android:orientation="vertical">
-
-        <Button
-            android:id="@+id/ok"
+        android:background="@drawable/touch_background"
+        android:orientation="vertical"
+        android:gravity="bottom|center_horizontal"
+        android:paddingTop="2dp" >
+        <TextView
+            android:id="@+id/msg_show"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="确定"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:padding="2dp"
+            />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
 
-        <Button
-            android:id="@+id/back"
+            <Button
+                android:id="@+id/ok"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="确定"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <Button
+                android:id="@+id/back"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="返回"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="返回"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:layout_marginTop="5dp" >
 
-        <Button
-            android:id="@+id/menu"
+            <Button
+                android:id="@+id/menu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="菜单"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <Button
+                android:id="@+id/exit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="退出"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="菜单"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:gravity="center" >
+            <Button
+                android:id="@+id/up"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="向上"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/exit"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="退出"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:gravity="center" >
+
+            <Button
+                android:id="@+id/left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="向左"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <Button
+                android:id="@+id/center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="确定"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <Button
+                android:id="@+id/right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="向右"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+        </LinearLayout>
+                <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center" >
+
+            <Button
+                android:id="@+id/down"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="向下"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

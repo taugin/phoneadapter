@@ -10,6 +10,9 @@ import java.net.UnknownHostException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.android.phoneadapter.TouchActivity2.TouchEvent;
+import com.android.phoneadapter.TouchActivity2.WorkHandler;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -31,6 +34,9 @@ public class TouchActivity extends Activity {
 
     private DatagramSocket mDatagramSocket;
     private TouchEvent mTouchEvent;
+    private DatagramPacket mDatagramPacket;
+    private InetAddress mInetAddress;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,13 +75,33 @@ public class TouchActivity extends Activity {
         if (mWorkHandler != null && mWorkHandler.getLooper() != null) {
             mWorkHandler.getLooper().quit();
         }
+        try {
+            if (mDatagramSocket != null) {
+                mDatagramSocket.close();
+            }
+        } catch(Exception e) {
+        }
     }
 
 
     private void init() {
         try {
+            String serverIp = PreferenceManager
+                    .getDefaultSharedPreferences(TouchActivity.this)
+                    .getString("server_ip", null);
+            // Log.d(Log.TAG, "serverIp : " + serverIp);
+            if (!TextUtils.isEmpty(serverIp)) {
+                mInetAddress = InetAddress.getByName(serverIp);
+            }
+
             mDatagramSocket = new DatagramSocket(8990);
+            mDatagramPacket = new DatagramPacket(new byte[512], 512);
+            mDatagramPacket.setPort(8990);
+            mDatagramPacket.setAddress(mInetAddress);
+
         } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (UnknownHostException e) {
             e.printStackTrace();
         }
         mTouchEvent = new TouchEvent();
@@ -91,18 +117,10 @@ public class TouchActivity extends Activity {
         public void handleMessage(Message msg) {
             String sendData = (String) msg.obj;
             try {
-                String serverIp = PreferenceManager.getDefaultSharedPreferences(TouchActivity.this).getString("server_ip", null);
-                // Log.d(Log.TAG, "serverIp : " + serverIp);
-                if (TextUtils.isEmpty(serverIp)) {
-                    return;
-                }
-                InetAddress serverAddress = InetAddress.getByName(serverIp);
-                DatagramPacket packet = new DatagramPacket(sendData.getBytes(), sendData.getBytes().length, serverAddress, 8990);
+                mDatagramPacket.setData(sendData.getBytes(), 0, sendData.getBytes().length);
                 if (mDatagramSocket != null) {
-                    mDatagramSocket.send(packet);
+                    mDatagramSocket.send(mDatagramPacket);
                 }
-            } catch (UnknownHostException e) {
-                Log.d(Log.TAG, "error : " + e);
             } catch (IOException e) {
                 Log.d(Log.TAG, "error : " + e);
             }

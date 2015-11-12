@@ -40,6 +40,7 @@ public class EventSocket {
     private Context mContext;
     private ServerSocket mServerSocket;
     private DatagramSocket mDatagramSocket;
+    private DatagramPacket mDatagramPacket;
     private EventHandler mEventHandler;
     private Gson mGson;
     private PrivateHandler mPrivateHandler;
@@ -139,13 +140,15 @@ public class EventSocket {
                 mDatagramSocket.setReuseAddress(true);
             }
             byte data[] = new byte[1024];
-            DatagramPacket packet = new DatagramPacket(data, data.length);
+            if (mDatagramPacket == null) {
+                mDatagramPacket = new DatagramPacket(data, data.length);
+            }
             running = true;
             String packetData = null;
             mEventHandler.openTouchDevice();
             while(running) {
-                mDatagramSocket.receive(packet);
-                packetData = new String(packet.getData(), 0, packet.getLength());
+                mDatagramSocket.receive(mDatagramPacket);
+                packetData = new String(mDatagramPacket.getData(), 0, mDatagramPacket.getLength());
                 Message msg = mPrivateHandler.obtainMessage(MSG_TOUCH_DATA, packetData);
                 mPrivateHandler.sendMessage(msg);
             }

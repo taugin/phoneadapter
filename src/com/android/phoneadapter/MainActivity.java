@@ -43,7 +43,9 @@ public class MainActivity extends Activity implements OnClickListener {
         mMouseDeviceNode = (EditText) findViewById(R.id.key_mouse_node);
         button = (Button) findViewById(R.id.start_server);
         button.setOnClickListener(this);
-        button = (Button) findViewById(R.id.start_touch);
+        button = (Button) findViewById(R.id.start_touch1);
+        button.setOnClickListener(this);
+        button = (Button) findViewById(R.id.start_touch2);
         button.setOnClickListener(this);
         button = (Button) findViewById(R.id.set_server_ip);
         button.setOnClickListener(this);
@@ -71,7 +73,10 @@ public class MainActivity extends Activity implements OnClickListener {
             Intent intent = new Intent(this, FloatService.class);
             stopService(intent);
             startService(intent);
-        } else if (v.getId() == R.id.start_touch) {
+        } else if (v.getId() == R.id.start_touch1) {
+            startActivity(new Intent(this, TouchActivity.class));
+            finish();
+        } else if (v.getId() == R.id.start_touch2) {
             startActivity(new Intent(this, TouchActivity2.class));
             finish();
         } else if (v.getId() == R.id.set_server_ip) {

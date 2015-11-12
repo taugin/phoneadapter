@@ -25,21 +25,27 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 public class TouchActivity2 extends Activity implements OnClickListener {
 
     private WorkHandler mWorkHandler;
     private static int TID = 5000;
+    private int mSendCount = 0;
 
     private DatagramSocket mDatagramSocket;
     private TouchEvent mTouchEvent;
     private int mLastX;
     private int mLastY;
+    private TextView mTextView;
+    private DatagramPacket mDatagramPacket;
+    private InetAddress mInetAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.touch_layout2);
+        mTextView  = (TextView) findViewById(R.id.msg_show);
         FrameLayout frameLayout = (FrameLayout) findViewById(R.id.touch_layout);
         TouchView touchView = new TouchView(this);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -1);
@@ -65,13 +71,13 @@ public class TouchActivity2 extends Activity implements OnClickListener {
             mTouchEvent.sendEvent(1, 0, 0, 0, 0, 0, 1, 2, 0);
             return true;
         }
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+                || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
             finish();
             return true;
         }
         return super.onKeyDown(keyCode, event);
     }
-
 
     @Override
     protected void onDestroy() {
@@ -79,13 +85,32 @@ public class TouchActivity2 extends Activity implements OnClickListener {
         if (mWorkHandler != null && mWorkHandler.getLooper() != null) {
             mWorkHandler.getLooper().quit();
         }
+        try {
+            if (mDatagramSocket != null) {
+                mDatagramSocket.close();
+            }
+        } catch (Exception e) {
+        }
     }
-
 
     private void init() {
         try {
+            String serverIp = PreferenceManager
+                    .getDefaultSharedPreferences(TouchActivity2.this)
+                    .getString("server_ip", null);
+            // Log.d(Log.TAG, "serverIp : " + serverIp);
+            if (!TextUtils.isEmpty(serverIp)) {
+                mInetAddress = InetAddress.getByName(serverIp);
+            }
+
             mDatagramSocket = new DatagramSocket(8990);
+            mDatagramPacket = new DatagramPacket(new byte[512], 512);
+            mDatagramPacket.setPort(8990);
+            mDatagramPacket.setAddress(mInetAddress);
+
         } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (UnknownHostException e) {
             e.printStackTrace();
         }
         mTouchEvent = new TouchEvent();
@@ -101,22 +126,25 @@ public class TouchActivity2 extends Activity implements OnClickListener {
         public void handleMessage(Message msg) {
             String sendData = (String) msg.obj;
             try {
-                String serverIp = PreferenceManager.getDefaultSharedPreferences(TouchActivity2.this).getString("server_ip", null);
-                // Log.d(Log.TAG, "serverIp : " + serverIp);
-                if (TextUtils.isEmpty(serverIp)) {
-                    return;
-                }
-                InetAddress serverAddress = InetAddress.getByName(serverIp);
-                DatagramPacket packet = new DatagramPacket(sendData.getBytes(), sendData.getBytes().length, serverAddress, 8990);
+                mDatagramPacket.setData(sendData.getBytes(), 0, sendData.getBytes().length);
                 if (mDatagramSocket != null) {
-                    mDatagramSocket.send(packet);
+                    mDatagramSocket.send(mDatagramPacket);
                 }
-            } catch (UnknownHostException e) {
-                Log.d(Log.TAG, "error : " + e);
+                showMessage("Packet Counter : " + (++ mSendCount));
             } catch (IOException e) {
                 Log.d(Log.TAG, "error : " + e);
+                showMessage(e.getLocalizedMessage());
             }
         }
+    }
+
+    private void showMessage(final String msg) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mTextView.setText(msg);
+            }
+        });
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -128,7 +156,7 @@ public class TouchActivity2 extends Activity implements OnClickListener {
 
         @Override
         public boolean onTouchEvent(MotionEvent event) {
-            switch(event.getActionMasked()) {
+            switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 mLastX = (int) event.getX();
                 mLastY = (int) event.getY();
@@ -141,7 +169,8 @@ public class TouchActivity2 extends Activity implements OnClickListener {
                 int dy = y - mLastY;
                 mLastX = x;
                 mLastY = y;
-                mTouchEvent.sendEvent(0, event.getPointerId(0), 1, 2, dx, dy, 0, 0);
+                mTouchEvent.sendEvent(0, 0, 1, 2, dx, dy,
+                        0, 0);
                 break;
             case MotionEvent.ACTION_UP:
                 mTouchEvent.sendEvent(0, 0, 0, 0, 0, 0, 0, 0);
@@ -152,10 +181,13 @@ public class TouchActivity2 extends Activity implements OnClickListener {
     }
 
     class TouchEvent {
-        public void sendEvent(int type, int slot, int pressed, int action, int x, int y, int key, int state) {
+        public void sendEvent(int type, int slot, int pressed, int action,
+                int x, int y, int key, int state) {
             sendEvent(type, slot, pressed, action, x, y, key, state, 2);
         }
-        public void sendEvent(int type, int slot, int pressed, int action, int x, int y, int key, int state, int source) {
+
+        public void sendEvent(int type, int slot, int pressed, int action,
+                int x, int y, int key, int state, int source) {
             JSONObject jobject = new JSONObject();
             try {
                 jobject.put("type", type);
@@ -173,7 +205,7 @@ public class TouchActivity2 extends Activity implements OnClickListener {
             String sendData = jobject.toString();
             Message message = Message.obtain();
             message.obj = sendData;
-            Log.d(Log.TAG, "sendData : " + sendData);
+            // Log.d(Log.TAG, "sendData : " + sendData);
             mWorkHandler.sendMessage(message);
         }
     }

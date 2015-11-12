@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_vertical"
+    android:gravity="center_horizontal"
     android:orientation="vertical" >
 
     <LinearLayout
@@ -13,7 +13,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal" >
 
             <TextView
                 android:layout_width="wrap_content"
@@ -33,7 +33,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal" >
 
             <TextView
                 android:layout_width="wrap_content"
@@ -49,10 +49,11 @@
                 android:text="/dev/input/event1"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
         </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal" >
 
             <TextView
                 android:layout_width="wrap_content"
@@ -68,6 +69,7 @@
                 android:text="/dev/input/event2"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
         </LinearLayout>
+
         <Button
             android:id="@+id/set_rw"
             android:layout_width="match_parent"
@@ -122,6 +124,28 @@
         android:layout_marginTop="20dp" >
 
         <Button
+            android:id="@+id/start_touch1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="StartTouch1"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <Button
+            android:id="@+id/start_touch2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="StartTouch2"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp" >
+
+        <Button
             android:id="@+id/start_server"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -130,19 +154,12 @@
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <Button
-            android:id="@+id/start_touch"
+            android:id="@+id/stop_server"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="StartTouch"
+            android:text="StopServer"
             android:textAppearance="?android:attr/textAppearanceLarge" />
     </LinearLayout>
-
-    <Button
-        android:id="@+id/stop_server"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="StopServer"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
 
 </LinearLayout>

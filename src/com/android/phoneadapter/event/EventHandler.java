@@ -14,7 +14,6 @@ import com.android.phoneadapter.Log;
 import com.android.phoneadapter.floatview.FloatService;
 import com.android.phoneadapter.utils.Utils;
 
-
 public class EventHandler {
     private static boolean useInject = false;
     public static int TRACKID = 1;
@@ -25,11 +24,11 @@ public class EventHandler {
     public static final String ABS_MT_SLOT = Integer.toString(0x2f);
     public static final String ABS_MT_POSITION_X = Integer.toString(0x35);
     public static final String ABS_MT_POSITION_Y = Integer.toString(0x36);
-    
+
     public static final String ABS_MT_TRACKING_ID = Integer.toString(0x39);
     public static final String ABS_MT_PRESSURE = Integer.toString(0x3a);
     public static final String ABS_MT_TOUCH_MAJOR = Integer.toString(0x30);
-    
+
     public static final String EV_ABS = Integer.toString(0x3);
     public static final String EV_KEY = Integer.toString(0x1);
     public static final String KEY_BACK = Integer.toString(0x9e);
@@ -37,13 +36,13 @@ public class EventHandler {
     public static final String KEY_MENU = Integer.toString(0x8b);
     public static final String KEY_VOLUME_DOWN = Integer.toString(0x72);
     public static final String KEY_VOLUME_UP = Integer.toString(0x73);
-    
+
     public static final String DOWN = Integer.toString(0x1);
     public static final String UP = Integer.toString(0x0);
-    
+
     public static final String EV_SYN = Integer.toString(0x0);
     public static final String SYN_REPORT = Integer.toString(0x0);
-    
+
     public static final String BTN_TOUCH = Integer.toString(0x14a);
 
     public static void print() {
@@ -69,10 +68,11 @@ public class EventHandler {
         mHeight = Utils.getDisplayHeight(mFloatService);
     }
 
-    
     public boolean openTouchDevice() {
-        String touchDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("touch_device", EV_TOUCH_DEVICE);
-        String keyDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("key_device", EV_TOUCH_DEVICE);
+        String touchDevice = PreferenceManager.getDefaultSharedPreferences(
+                mFloatService).getString("touch_device", EV_TOUCH_DEVICE);
+        String keyDevice = PreferenceManager.getDefaultSharedPreferences(
+                mFloatService).getString("key_device", EV_TOUCH_DEVICE);
         if (TextUtils.isEmpty(touchDevice) || TextUtils.isEmpty(keyDevice)) {
             return false;
         }
@@ -90,8 +90,10 @@ public class EventHandler {
     }
 
     public void closeTouchDevice() {
-        String touchDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("touch_device", EV_TOUCH_DEVICE);
-        String keyDevice = PreferenceManager.getDefaultSharedPreferences(mFloatService).getString("key_device", EV_TOUCH_DEVICE);
+        String touchDevice = PreferenceManager.getDefaultSharedPreferences(
+                mFloatService).getString("touch_device", EV_TOUCH_DEVICE);
+        String keyDevice = PreferenceManager.getDefaultSharedPreferences(
+                mFloatService).getString("key_device", EV_TOUCH_DEVICE);
         if (TextUtils.isEmpty(touchDevice) || TextUtils.isEmpty(keyDevice)) {
             return;
         }
@@ -108,10 +110,25 @@ public class EventHandler {
     }
 
     private void updatePointer(Motion motion) {
+        long t1 = SystemClock.elapsedRealtime();
         if (mFloatService != null) {
-            int realX = getPointerX(motion);
-            int realY = getPointerY(motion);
-            mFloatService.updatePointerPosition(motion.pressed == 1, realX, realY);
+            int realX = 0;
+            int realY = 0;
+            if (motion.source == 1) { // From PC python
+                realX = motion.x;
+                realY = motion.y;
+            } else if (motion.source == 2) { // From Phone delta touch
+                mFloatService.getPosition(mPos);
+                realX = mPos[0] + motion.dx;
+                realY = mPos[1] + motion.dy;
+            } else if (motion.source == 0) { // From Phone absolutely touch
+                realX = getPointerX(motion);
+                realY = getPointerY(motion);
+            }
+            mFloatService.updatePointerPosition(motion.pressed == 1, realX,
+                    realY);
+            long t2 = SystemClock.elapsedRealtime();
+            mFloatService.setShowMsg("time : " + (t2 - t1));
         }
     }
 
@@ -124,7 +141,7 @@ public class EventHandler {
         }
         return motion.x;
     }
-    
+
     private int getPointerY(Motion motion) {
         if (mFloatService.getResources().getConfiguration().orientation == 2) {
             if (motion.source == 0) {
@@ -135,47 +152,45 @@ public class EventHandler {
         return motion.y;
     }
 
-    private int getTouchX(Motion motion) {
-        if (mFloatService.getResources().getConfiguration().orientation == 2
-                && motion.source != 0) {
-            return mHeight - motion.y;
-        }
-        return motion.x;
-    }
-    
-    private int getTouchY(Motion motion) {
-        if (mFloatService.getResources().getConfiguration().orientation == 2
-                && motion.source != 0) {
-            return motion.x;
-        }
-        return motion.y;
-    }
-
     private void handleTouchMotion(Motion motion) {
+        if(motion.source == 2) {
+            // return;
+        }
         mFloatService.getPosition(mPos);
-        Log.d(Log.TAG, "motion : " + motion.action);
         int realX = mPos[0];
         int realY = mPos[1];
         if (motion.action == 1) {
             // For huawei
             mTouchSender.sendEvent(EV_KEY, BTN_TOUCH, String.valueOf(1));
 
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_SLOT, String.valueOf(motion.slot));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_TRACKING_ID, String.valueOf(TRACKID++));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_POSITION_X, String.valueOf(realX));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_POSITION_Y, String.valueOf(realY));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_PRESSURE, Integer.toString(0x350));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_TOUCH_MAJOR, Integer.toString(0x6));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_SLOT,
+                    String.valueOf(motion.slot));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_TRACKING_ID,
+                    String.valueOf(TRACKID++));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_POSITION_X,
+                    String.valueOf(realX));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_POSITION_Y,
+                    String.valueOf(realY));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_PRESSURE,
+                    Integer.toString(0x350));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_TOUCH_MAJOR,
+                    Integer.toString(0x6));
             mTouchSender.sendEvent(EV_SYN, SYN_REPORT, String.valueOf(0));
         } else if (motion.action == 2 && motion.pressed == 1) {
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_SLOT, String.valueOf(motion.slot));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_POSITION_X, String.valueOf(realX));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_POSITION_Y, String.valueOf(realY));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_PRESSURE, Integer.toString(0x350));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_SLOT,
+                    String.valueOf(motion.slot));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_POSITION_X,
+                    String.valueOf(realX));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_POSITION_Y,
+                    String.valueOf(realY));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_PRESSURE,
+                    Integer.toString(0x350));
             mTouchSender.sendEvent(EV_SYN, SYN_REPORT, String.valueOf(0));
         } else if (motion.action == 0) {
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_SLOT, String.valueOf(motion.slot));
-            mTouchSender.sendEvent(EV_ABS, ABS_MT_TRACKING_ID, String.valueOf(-1));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_SLOT,
+                    String.valueOf(motion.slot));
+            mTouchSender.sendEvent(EV_ABS, ABS_MT_TRACKING_ID,
+                    String.valueOf(-1));
             mTouchSender.sendEvent(EV_SYN, SYN_REPORT, String.valueOf(0));
 
             // For huawei
@@ -228,27 +243,34 @@ public class EventHandler {
     }
 
     private void handleTouchMotionViaInject(Motion motion) {
-        int realX = getTouchX(motion);
-        int realY = getTouchY(motion);
+        mFloatService.getPosition(mPos);
+        int realX = mPos[0];
+        int realY = mPos[1];
         MotionEvent event = null;
         int action = 0;
         long downTime = SystemClock.uptimeMillis();
         long eventTime = SystemClock.uptimeMillis();
         if (motion.action == 1) {
             action = MotionEvent.ACTION_DOWN;
-            event = MotionEvent.obtain(downTime, eventTime, action, realX, realY, 0);
+            event = MotionEvent.obtain(downTime, eventTime, action, realX,
+                    realY, 0);
             Log.d(Log.TAG, "event : " + event);
-            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
+            InputManager.getInstance().injectInputEvent(event,
+                    InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
         } else if (motion.action == 2 && motion.pressed == 1) {
             action = MotionEvent.ACTION_MOVE;
-            event = MotionEvent.obtain(downTime, eventTime, action, realX, realY, 0);
+            event = MotionEvent.obtain(downTime, eventTime, action, realX,
+                    realY, 0);
             Log.d(Log.TAG, "event : " + event);
-            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
+            InputManager.getInstance().injectInputEvent(event,
+                    InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
         } else if (motion.action == 0) {
             action = MotionEvent.ACTION_UP;
-            event = MotionEvent.obtain(downTime, eventTime, action, realX, realY, 0);
+            event = MotionEvent.obtain(downTime, eventTime, action, realX,
+                    realY, 0);
             Log.d(Log.TAG, "event : " + event);
-            InputManager.getInstance().injectInputEvent(event, InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
+            InputManager.getInstance().injectInputEvent(event,
+                    InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
         }
         if (event != null) {
             event.recycle();
